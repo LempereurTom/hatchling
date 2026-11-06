@@ -2,9 +2,11 @@
 //! and picks a window; the windows are built here so the integration test
 //! can drive them without a display.
 
+pub mod add_window;
 pub mod args;
 pub mod backend;
 mod entries;
+pub mod explorer;
 pub mod main_window;
 mod password;
 mod platform;

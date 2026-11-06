@@ -17,6 +17,11 @@ use clap::{ArgGroup, Parser};
         "extract_to",
         "extract_files",
         "test",
+        "add",
+        "add_zip",
+        "add_7z",
+        "add_each_zip",
+        "extract_dialog",
         "register_shell",
         "unregister_shell",
     ])),
@@ -37,6 +42,21 @@ pub struct Args {
     /// Check every file for damage, without writing anything
     #[arg(long, value_name = "ARCHIVE", num_args = 1..)]
     pub test: Option<Vec<PathBuf>>,
+    /// Open "Archive name and parameters" for these files and folders
+    #[arg(long, value_name = "PATH", num_args = 1..)]
+    pub add: Option<Vec<PathBuf>>,
+    /// Put these files and folders in one .zip next to them, with the saved settings
+    #[arg(long, value_name = "PATH", num_args = 1..)]
+    pub add_zip: Option<Vec<PathBuf>>,
+    /// Put these files and folders in one .7z next to them, with the saved settings
+    #[arg(long = "add-7z", value_name = "PATH", num_args = 1..)]
+    pub add_7z: Option<Vec<PathBuf>>,
+    /// Put each of these files and folders in its own .zip
+    #[arg(long, value_name = "PATH", num_args = 1..)]
+    pub add_each_zip: Option<Vec<PathBuf>>,
+    /// Open the extraction window for one archive
+    #[arg(long, value_name = "ARCHIVE")]
+    pub extract_dialog: Option<PathBuf>,
     /// With an extract option: keep the archive, removing nothing
     #[arg(long, requires = "extracting")]
     pub keep_archive: bool,
@@ -68,10 +88,25 @@ pub struct TaskArgs {
     pub keep_archive: bool,
 }
 
+/// How "Add" was asked for.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum AddKind {
+    /// Show "Archive name and parameters" first.
+    Dialog,
+    /// Straight to the progress, in this format.
+    Quick(hatchzip_core::create::Format),
+    /// One .zip per item, straight to the progress.
+    EachZip,
+}
+
 #[derive(Debug, PartialEq, Eq)]
 pub enum Launch {
-    /// The main window, empty or with an archive open.
+    /// The WinRAR-style browser, in a folder or inside an archive.
+    Explorer(Option<PathBuf>),
+    /// The extraction window for one archive.
     Main(Option<PathBuf>),
+    /// Make an archive.
+    Add(AddKind, Vec<PathBuf>),
     /// A small window that runs one task, started from a right-click.
     Task(TaskArgs),
     /// Installers run these; no window opens.
@@ -81,13 +116,15 @@ pub enum Launch {
 
 impl Args {
     pub fn launch(self) -> Launch {
-        let task = |kind, archives| {
+        let task = |kind, archives: Vec<PathBuf>| {
             Launch::Task(TaskArgs {
                 kind,
-                archives,
+                archives: expand_lists(archives),
                 keep_archive: self.keep_archive,
             })
         };
+        let add = |kind, paths| Launch::Add(kind, expand_lists(paths));
+        use hatchzip_core::create::Format;
         if self.register_shell {
             Launch::RegisterShell
         } else if self.unregister_shell {
@@ -100,10 +137,39 @@ impl Args {
             task(TaskKind::ExtractFiles(None), a)
         } else if let Some(a) = self.test {
             task(TaskKind::Test, a)
+        } else if let Some(a) = self.add {
+            add(AddKind::Dialog, a)
+        } else if let Some(a) = self.add_zip {
+            add(AddKind::Quick(Format::Zip), a)
+        } else if let Some(a) = self.add_7z {
+            add(AddKind::Quick(Format::SevenZ), a)
+        } else if let Some(a) = self.add_each_zip {
+            add(AddKind::EachZip, a)
+        } else if let Some(a) = self.extract_dialog {
+            Launch::Main(Some(a))
         } else {
-            Launch::Main(self.archive)
+            Launch::Explorer(self.archive)
         }
     }
+}
+
+/// The Windows 11 menu passes a long selection as `@list.hzlist`, one path
+/// per line, which it wrote to the temporary folder for this process.
+fn expand_lists(paths: Vec<PathBuf>) -> Vec<PathBuf> {
+    let mut out = Vec::new();
+    for p in paths {
+        let s = p.to_string_lossy();
+        if let Some(list) = s.strip_prefix('@')
+            && list.ends_with(".hzlist")
+            && let Ok(text) = std::fs::read_to_string(list)
+        {
+            let _ = std::fs::remove_file(list);
+            out.extend(text.lines().filter(|l| !l.is_empty()).map(PathBuf::from));
+        } else {
+            out.push(p);
+        }
+    }
+    out
 }
 
 #[cfg(test)]
@@ -133,10 +199,22 @@ mod tests {
 
     #[test]
     fn every_documented_form_parses() {
-        assert_eq!(parse(&[]).unwrap(), Launch::Main(None));
+        assert_eq!(parse(&[]).unwrap(), Launch::Explorer(None));
         assert_eq!(
             parse(&["game.zip"]).unwrap(),
+            Launch::Explorer(Some("game.zip".into()))
+        );
+        assert_eq!(
+            parse(&["--extract-dialog", "game.zip"]).unwrap(),
             Launch::Main(Some("game.zip".into()))
+        );
+        assert_eq!(
+            parse(&["--add", "a", "b c"]).unwrap(),
+            Launch::Add(AddKind::Dialog, vec!["a".into(), "b c".into()])
+        );
+        assert_eq!(
+            parse(&["--add-7z", "a"]).unwrap(),
+            Launch::Add(AddKind::Quick(hatchzip_core::create::Format::SevenZ), vec!["a".into()])
         );
         assert_eq!(
             parse(&["--extract-here", "a b/game.7z.001"]).unwrap(),

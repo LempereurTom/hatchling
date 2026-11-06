@@ -90,6 +90,8 @@ pub struct Progress {
     pub phase: AtomicU8,
     pub current: Mutex<String>,
     pub cancel: AtomicBool,
+    /// Held while set: the encoder waits for the next read.
+    pub pause: AtomicBool,
 }
 
 impl Progress {
@@ -411,6 +413,9 @@ const CANCELLED: &str = "cancelled";
 
 impl Read for Source<'_> {
     fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+        while self.progress.pause.load(Ordering::Relaxed) && !self.progress.cancelled() {
+            std::thread::sleep(std::time::Duration::from_millis(100));
+        }
         if self.progress.cancelled() {
             return Err(cancelled_error());
         }

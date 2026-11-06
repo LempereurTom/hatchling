@@ -1,0 +1,364 @@
+import { Button, CheckBox, ComboBox, LineEdit, TabWidget, TextEdit, SpinBox, ProgressIndicator, Palette, GroupBox } from "std-widgets.slint";
+import { Theme, Line } from "theme.slint";
+
+export enum AddScreen { settings, working, done, failed }
+
+// "Archive name and parameters", laid out the way WinRAR's dialog is so
+// that the same things are found in the same places, then the progress.
+export component AddWindow inherits Window {
+    in property <AddScreen> screen: AddScreen.settings;
+    in-out property <string> archive-name;
+    // 0 ZIP, 1 7z.
+    in-out property <int> format: 0;
+    // Index into the methods list, which maps to levels 0, 1, 3, 5, 7, 9.
+    in-out property <int> method: 3;
+    // Index into the volume sizes, the last one being "custom".
+    in-out property <int> volume-choice: 0;
+    in-out property <string> volume-custom: "";
+    in-out property <int> solid-choice: 2;
+    in-out property <int> threads: 0;
+    in-out property <bool> delete-after;
+    in-out property <bool> test-after;
+    in-out property <bool> each-separately;
+    in-out property <bool> encrypt-names: true;
+    in-out property <string> comment;
+    in property <string> password-state;
+    in property <string> sources-text;
+    in property <[string]> history;
+    // Progress.
+    in property <string> heading;
+    in property <string> current;
+    in property <string> amounts;
+    in property <string> rate;
+    in property <string> ratio;
+    in property <float> progress;
+    in property <string> result-text;
+    in property <bool> result-bad;
+    in property <bool> paused;
+    // The password popup.
+    in-out property <bool> password-open;
+    in-out property <string> password-a;
+    in-out property <string> password-b;
+    in-out property <bool> show-password;
+    in property <string> password-error;
+
+    callback browse();
+    callback ok();
+    callback cancel();
+    callback save-defaults();
+    callback set-password(string, string);
+    callback clear-password();
+    callback pause-toggled();
+    callback open-folder();
+    callback format-changed();
+    callback pick-history(int);
+
+    public function methods() -> [string] { return [@tr("Store"), @tr("Fastest"), @tr("Fast"), @tr("Normal"), @tr("Good"), @tr("Best")]; }
+
+    title: root.screen == AddScreen.settings ? @tr("Archive name and parameters") : root.heading;
+    preferred-width: 600px;
+    preferred-height: 520px;
+    min-width: 520px;
+    min-height: 460px;
+    background: Palette.background;
+
+    if root.screen == AddScreen.settings: VerticalLayout {
+        padding: 12px;
+        spacing: 10px;
+        TabWidget {
+            Tab {
+                title: @tr("General");
+                VerticalLayout {
+                    padding: 12px;
+                    spacing: 10px;
+                    Text { text: @tr("Archive name"); }
+                    HorizontalLayout {
+                        spacing: 6px;
+                        LineEdit {
+                            text <=> root.archive-name;
+                            accessible-label: @tr("Archive name");
+                            horizontal-stretch: 1;
+                        }
+                        if root.history.length > 0: ComboBox {
+                            width: 34px;
+                            model: root.history;
+                            current-index: -1;
+                            accessible-label: @tr("Recent archive names");
+                            selected => { root.pick-history(self.current-index); }
+                        }
+                        Button {
+                            text: @tr("Browse…");
+                            clicked => { root.browse(); }
+                        }
+                    }
+                    HorizontalLayout {
+                        spacing: 12px;
+                        GroupBox {
+                            title: @tr("Archive format");
+                            VerticalLayout {
+                                spacing: 6px;
+                                ComboBox {
+                                    model: ["ZIP", "7Z"];
+                                    current-index <=> root.format;
+                                    accessible-label: @tr("Archive format");
+                                    selected => { root.format-changed(); }
+                                }
+                                Text {
+                                    text: @tr("RAR can be opened but not created: the format is proprietary.");
+                                    color: Theme.muted;
+                                    font-size: Theme.small-size;
+                                    wrap: word-wrap;
+                                }
+                            }
+                        }
+                        GroupBox {
+                            title: @tr("Archiving options");
+                            VerticalLayout {
+                                spacing: 4px;
+                                CheckBox {
+                                    text: @tr("Delete files after archiving");
+                                    checked <=> root.delete-after;
+                                }
+                                CheckBox {
+                                    text: @tr("Test archived files");
+                                    checked <=> root.test-after;
+                                }
+                                CheckBox {
+                                    text: @tr("Put each file to separate archive");
+                                    checked <=> root.each-separately;
+                                }
+                            }
+                        }
+                    }
+                    GridLayout {
+                        spacing: 8px;
+                        Row {
+                            Text { text: @tr("Compression method"); vertical-alignment: center; }
+                            ComboBox {
+                                model: root.methods();
+                                current-index <=> root.method;
+                            }
+                        }
+                        Row {
+                            Text { text: @tr("Split to volumes, size"); vertical-alignment: center; }
+                            HorizontalLayout {
+                                spacing: 6px;
+                                ComboBox {
+                                    model: [@tr("No splitting"), "100 MB", "700 MB (CD)", "1 GB", "4 GB (FAT32)", "4.7 GB (DVD)", "25 GB (Blu-ray)", @tr("Custom")];
+                                    current-index <=> root.volume-choice;
+                                    horizontal-stretch: 1;
+                                }
+                                if root.volume-choice == 7: LineEdit {
+                                    text <=> root.volume-custom;
+                                    placeholder-text: @tr("e.g. 2 GB");
+                                    accessible-label: @tr("Volume size");
+                                    width: 110px;
+                                }
+                            }
+                        }
+                    }
+                    HorizontalLayout {
+                        spacing: 8px;
+                        Button {
+                            text: @tr("Set password…");
+                            clicked => { root.password-open = true; }
+                        }
+                        Text {
+                            text: root.password-state;
+                            color: Theme.muted;
+                            vertical-alignment: center;
+                            horizontal-stretch: 1;
+                        }
+                        Button {
+                            text: @tr("Save as default");
+                            clicked => { root.save-defaults(); }
+                        }
+                    }
+                    Rectangle { vertical-stretch: 1; }
+                }
+            }
+            Tab {
+                title: @tr("Advanced");
+                VerticalLayout {
+                    padding: 12px;
+                    spacing: 10px;
+                    GridLayout {
+                        spacing: 8px;
+                        Row {
+                            Text { text: @tr("Solid block size (7z)"); vertical-alignment: center; }
+                            ComboBox {
+                                enabled: root.format == 1;
+                                model: [@tr("Non-solid"), "64 MB", "256 MB", "1 GB", "4 GB", @tr("Solid (one block)")];
+                                current-index <=> root.solid-choice;
+                            }
+                        }
+                        Row {
+                            Text { text: @tr("Threads (0 = one per core)"); vertical-alignment: center; }
+                            SpinBox {
+                                enabled: root.format == 1;
+                                minimum: 0;
+                                maximum: 128;
+                                value <=> root.threads;
+                            }
+                        }
+                    }
+                    Text {
+                        text: @tr("Smaller solid blocks let HatchZip extract the archive in place later with little free space: it needs about one block of headroom. One single block compresses best but must be extracted next to the archive.");
+                        wrap: word-wrap;
+                        color: Theme.muted;
+                    }
+                    CheckBox {
+                        text: @tr("Encrypt file names (7z)");
+                        enabled: root.format == 1;
+                        checked <=> root.encrypt-names;
+                    }
+                    Rectangle { vertical-stretch: 1; }
+                }
+            }
+            Tab {
+                title: @tr("Files");
+                VerticalLayout {
+                    padding: 12px;
+                    spacing: 6px;
+                    Text { text: @tr("Files to add"); }
+                    TextEdit {
+                        text: root.sources-text;
+                        read-only: true;
+                        vertical-stretch: 1;
+                    }
+                }
+            }
+            Tab {
+                title: @tr("Comment");
+                VerticalLayout {
+                    padding: 12px;
+                    spacing: 6px;
+                    Text {
+                        text: root.format == 0 ? @tr("Archive comment") : @tr("Comments are only stored in ZIP archives.");
+                    }
+                    TextEdit {
+                        enabled: root.format == 0;
+                        text <=> root.comment;
+                        vertical-stretch: 1;
+                    }
+                }
+            }
+        }
+        HorizontalLayout {
+            alignment: end;
+            spacing: 8px;
+            Button {
+                text: "OK";
+                primary: true;
+                clicked => { root.ok(); }
+            }
+            Button {
+                text: @tr("Cancel");
+                clicked => { root.cancel(); }
+            }
+        }
+    }
+
+    if root.screen != AddScreen.settings: VerticalLayout {
+        padding: 18px;
+        spacing: 10px;
+        Text {
+            text: root.heading;
+            font-size: Theme.title-size;
+            wrap: word-wrap;
+        }
+        Text {
+            text: root.current;
+            overflow: elide;
+            color: Theme.muted;
+        }
+        ProgressIndicator {
+            progress: root.progress;
+            indeterminate: root.screen == AddScreen.working && root.progress <= 0;
+        }
+        HorizontalLayout {
+            Text { text: root.amounts; horizontal-stretch: 1; }
+            Text { text: root.rate; color: Theme.muted; }
+        }
+        Text { text: root.ratio; color: Theme.muted; }
+        if root.screen == AddScreen.done || root.screen == AddScreen.failed: Text {
+            text: root.result-text;
+            wrap: word-wrap;
+            color: root.result-bad ? Theme.danger : Palette.foreground;
+        }
+        Rectangle { vertical-stretch: 1; }
+        HorizontalLayout {
+            alignment: end;
+            spacing: 8px;
+            if root.screen == AddScreen.working: Button {
+                text: root.paused ? @tr("Continue") : @tr("Pause");
+                clicked => { root.pause-toggled(); }
+            }
+            if root.screen == AddScreen.working: Button {
+                text: @tr("Cancel");
+                clicked => { root.cancel(); }
+            }
+            if root.screen == AddScreen.done: Button {
+                text: @tr("Open folder");
+                clicked => { root.open-folder(); }
+            }
+            if root.screen != AddScreen.working: Button {
+                text: @tr("Close");
+                primary: true;
+                clicked => { root.cancel(); }
+            }
+        }
+    }
+
+    if root.password-open: Rectangle {
+        background: Theme.scrim;
+        TouchArea { }
+        Rectangle {
+            width: min(parent.width - 40px, 420px);
+            height: 270px;
+            background: Palette.background;
+            border-radius: 8px;
+            VerticalLayout {
+                padding: 18px;
+                spacing: 8px;
+                Text { text: @tr("Enter password"); font-size: Theme.title-size; }
+                LineEdit {
+                    input-type: root.show-password ? text : password;
+                    text <=> root.password-a;
+                    accessible-label: @tr("Enter password");
+                }
+                Text { text: @tr("Reenter password for verification"); }
+                LineEdit {
+                    input-type: root.show-password ? text : password;
+                    text <=> root.password-b;
+                    accessible-label: @tr("Reenter password for verification");
+                }
+                CheckBox {
+                    text: @tr("Show password");
+                    checked <=> root.show-password;
+                }
+                if root.password-error != "": Text {
+                    text: root.password-error;
+                    color: Theme.danger;
+                }
+                HorizontalLayout {
+                    alignment: end;
+                    spacing: 8px;
+                    Button {
+                        text: @tr("Remove password");
+                        clicked => { root.clear-password(); }
+                    }
+                    Button {
+                        text: "OK";
+                        primary: true;
+                        clicked => { root.set-password(root.password-a, root.password-b); }
+                    }
+                    Button {
+                        text: @tr("Cancel");
+                        clicked => { root.password-open = false; }
+                    }
+                }
+            }
+        }
+    }
+}

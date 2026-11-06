@@ -15,6 +15,8 @@ pub struct Action {
     /// Stable identifier, used in file and registry key names.
     pub id: &'static str,
     pub label: &'static str,
+    /// The same label in French, for Explorer when Windows is in French.
+    pub label_fr: &'static str,
     /// The GUI's flags, put before the archive paths.
     pub flag: &'static str,
 }
@@ -24,27 +26,57 @@ pub const ACTIONS: &[Action] = &[
     Action {
         id: "extract-files",
         label: "Extract files…",
+        label_fr: "Extraire les fichiers…",
         flag: "--extract-files",
     },
     Action {
         id: "extract-here",
         label: "Extract here",
+        label_fr: "Extraire ici",
         flag: "--extract-here",
     },
     Action {
         id: "extract-here-keep",
         label: "Extract here (keep archive)",
+        label_fr: "Extraire ici (garder l'archive)",
         flag: "--keep-archive --extract-here",
     },
     Action {
         id: "extract-to",
         label: "Extract to a new folder",
+        label_fr: "Extraire dans un nouveau dossier",
         flag: "--extract-to",
     },
     Action {
         id: "test",
         label: "Test archive",
+        label_fr: "Tester l'archive",
         flag: "--test",
+    },
+];
+
+/// What every file and folder gets: making an archive from it. Explorer
+/// starts one process per selected item for these registry entries, so a
+/// selection of several becomes one archive each; the Windows 11 menu entry
+/// in `hatchzip-shellext` hands the whole selection over at once.
+pub const ADD_ACTIONS: &[Action] = &[
+    Action {
+        id: "add",
+        label: "Add to archive…",
+        label_fr: "Ajouter à l'archive…",
+        flag: "--add",
+    },
+    Action {
+        id: "add-zip",
+        label: "Add to a .zip archive",
+        label_fr: "Ajouter à une archive .zip",
+        flag: "--add-zip",
+    },
+    Action {
+        id: "add-7z",
+        label: "Add to a .7z archive",
+        label_fr: "Ajouter à une archive .7z",
+        flag: "--add-7z",
     },
 ];
 

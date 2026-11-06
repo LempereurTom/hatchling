@@ -25,6 +25,56 @@ pub struct Settings {
     /// Close the right-click window once everything in it is extracted, as
     /// other extractors do. A test, a pause or a failure keeps it open.
     pub close_when_done: bool,
+    /// "Archive name and parameters", as last saved with "Save as default".
+    pub add: AddDefaults,
+    /// Folders pinned in the browser's Favorites menu.
+    pub favorites: Vec<PathBuf>,
+    /// Folders recently extracted to, newest first, offered again.
+    pub extract_history: Vec<PathBuf>,
+    /// Archive names recently created, newest first.
+    pub archive_history: Vec<PathBuf>,
+    /// Where the browser opens.
+    pub last_folder: Option<PathBuf>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct AddDefaults {
+    pub format: hatchzip_core::create::Format,
+    pub level: u32,
+    /// 0 for no splitting.
+    pub volume_size: u64,
+    /// 0 for one block per file, `u64::MAX` for one block.
+    pub solid_block: u64,
+    pub threads: u32,
+    pub test_after: bool,
+    pub delete_sources: bool,
+    pub encrypt_names: bool,
+}
+
+impl Default for AddDefaults {
+    fn default() -> Self {
+        Self {
+            format: hatchzip_core::create::Format::Zip,
+            level: 5,
+            volume_size: 0,
+            solid_block: hatchzip_core::create::DEFAULT_SOLID_BLOCK,
+            threads: 0,
+            test_after: false,
+            delete_sources: false,
+            encrypt_names: true,
+        }
+    }
+}
+
+/// How many paths each history keeps.
+pub const HISTORY: usize = 12;
+
+/// Puts `path` first in `list`, once.
+pub fn remember(list: &mut Vec<PathBuf>, path: &Path) {
+    list.retain(|p| p != path);
+    list.insert(0, path.to_path_buf());
+    list.truncate(HISTORY);
 }
 
 impl Default for Settings {
@@ -34,6 +84,11 @@ impl Default for Settings {
             verify_first: false,
             keep_archive: false,
             close_when_done: true,
+            add: AddDefaults::default(),
+            favorites: Vec::new(),
+            extract_history: Vec::new(),
+            archive_history: Vec::new(),
+            last_folder: None,
         }
     }
 }
@@ -106,6 +161,8 @@ mod tests {
             verify_first: true,
             keep_archive: true,
             close_when_done: false,
+            favorites: vec!["C:/Games".into()],
+            ..Settings::default()
         };
         s.save_to(&path).unwrap();
         assert_eq!(Settings::load_from(&path), s);
@@ -128,6 +185,7 @@ mod tests {
                 verify_first: true,
                 keep_archive: false,
                 close_when_done: true,
+                ..Settings::default()
             }
         );
         // Files saved before keeping the archive was a choice remove it, as

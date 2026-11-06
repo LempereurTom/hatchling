@@ -10,7 +10,7 @@ use anyhow::Result;
 use clap::Parser;
 
 use hatchzip_gui::args::{Args, Launch};
-use hatchzip_gui::{APP_ID, backend, main_window, shell, task_window};
+use hatchzip_gui::{APP_ID, add_window, backend, explorer, main_window, shell, task_window};
 
 fn main() -> ExitCode {
     match run(Args::parse().launch()) {
@@ -41,7 +41,9 @@ fn run(launch: Launch) -> Result<()> {
     backend::select(drops.clone())?;
     slint::set_xdg_app_id(APP_ID)?;
     match launch {
+        Launch::Explorer(path) => explorer::run(path),
         Launch::Main(archive) => main_window::run(archive, drops),
+        Launch::Add(kind, paths) => add_window::run(kind, paths),
         Launch::Task(task) => task_window::run(task),
         Launch::RegisterShell | Launch::UnregisterShell => unreachable!("handled above"),
     }
