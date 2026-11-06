@@ -4,7 +4,7 @@
 use std::process::Command;
 
 fn gui() -> Command {
-    let mut cmd = Command::new(env!("CARGO_BIN_EXE_hatchzip-gui"));
+    let mut cmd = Command::new(env!("CARGO_BIN_EXE_hatchling"));
     // No display to open a window on, so any attempt would fail the run.
     cmd.env_remove("DISPLAY").env_remove("WAYLAND_DISPLAY");
     cmd
@@ -30,10 +30,7 @@ fn register_and_unregister_without_a_window() {
     let printed = String::from_utf8(out.stdout).unwrap();
     assert!(printed.contains("hatchzip.desktop"), "{printed}");
     let entry = std::fs::read_to_string(&menu).unwrap();
-    assert!(
-        entry.contains(env!("CARGO_BIN_EXE_hatchzip-gui")),
-        "{entry}"
-    );
+    assert!(entry.contains(env!("CARGO_BIN_EXE_hatchling")), "{entry}");
 
     let out = gui()
         .arg("--unregister-shell")
@@ -63,5 +60,5 @@ fn an_appimage_registers_itself_not_its_mount() {
         entry.contains("/home/sam/Apps/HatchZip-x86_64.AppImage"),
         "{entry}"
     );
-    assert!(!entry.contains(env!("CARGO_BIN_EXE_hatchzip-gui")));
+    assert!(!entry.contains(env!("CARGO_BIN_EXE_hatchling")));
 }

@@ -1,0 +1,30 @@
+Hatchling - extracteur et createur d'archives pour Windows 10 et 11
+https://github.com/LempereurTom/hatchling
+
+INSTALLER
+1. Extrayez tout le dossier du zip (clic droit > Extraire tout).
+2. Double-cliquez sur Installer.cmd.
+   Si Windows affiche "Windows a protege votre ordinateur", cliquez sur
+   "Informations complementaires" puis "Executer quand meme" : le programme
+   n'est pas signe par une autorite payante.
+3. Sur Windows 11, l'installeur propose d'ajouter Hatchling directement dans
+   le menu clic droit. Windows demande alors une seule fois l'autorisation
+   administrateur. Si vous refusez, tout fonctionne quand meme : l'entree est
+   alors dans "Afficher d'autres options".
+
+Aucun autre droit administrateur n'est necessaire. Le programme s'installe
+dans %LOCALAPPDATA%\Programs\Hatchling, pour votre compte uniquement.
+
+DESINSTALLER
+Parametres > Applications > Hatchling > Desinstaller,
+ou double-cliquez sur Desinstaller.cmd.
+
+A SAVOIR
+Par defaut, "Extraire ici" et "Extraire vers" SUPPRIMENT l'archive au fur et
+a mesure de l'extraction : c'est ce qui permet d'extraire un gros fichier avec
+peu d'espace libre. Pour garder l'archive, utilisez "Extraire ici (garder
+l'archive)", ou decochez "Supprimer l'archive pendant l'extraction" dans
+Parametres de la fenetre d'extraction.
+
+Hatchling est un fork non officiel de HatchZip (github.com/xevrion/hatchzip),
+sous licence MIT ou Apache-2.0.

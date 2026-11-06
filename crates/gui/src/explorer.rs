@@ -916,7 +916,7 @@ impl App {
         let inner = e.path.to_string_lossy().replace('\\', "/");
         // A folder of its own per view, so two files of the same name from
         // different folders never overwrite each other.
-        let dir = std::env::temp_dir().join("HatchZip View").join(format!(
+        let dir = std::env::temp_dir().join("Hatchling View").join(format!(
             "{}",
             SystemTime::now()
                 .duration_since(SystemTime::UNIX_EPOCH)
@@ -1134,7 +1134,7 @@ impl App {
             };
             w.set_version(env!("CARGO_PKG_VERSION").into());
             w.on_open_link(|| {
-                let _ = open::that_detached("https://github.com/xevrion/hatchzip");
+                let _ = open::that_detached("https://github.com/LempereurTom/hatchling");
             });
             let weak = w.as_weak();
             w.on_dismiss(move || {

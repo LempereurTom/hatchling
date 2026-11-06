@@ -493,7 +493,9 @@ pub fn create(
         .map(|m| m.len())
         .sum();
 
-    if options.test_after {
+    // The originals are only ever removed once every file has been read
+    // back from the new archive, whether or not a test was asked for.
+    if options.test_after || options.delete_sources {
         test(
             &volumes,
             options.format,

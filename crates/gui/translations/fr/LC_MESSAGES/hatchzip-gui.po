@@ -136,8 +136,8 @@ msgstr "Solide (un seul bloc)"
 msgid "Threads (0 = one per core)"
 msgstr "Threads (0 = un par cœur)"
 
-msgid "Smaller solid blocks let HatchZip extract the archive in place later with little free space: it needs about one block of headroom. One single block compresses best but must be extracted next to the archive."
-msgstr "Des blocs solides plus petits permettent à HatchZip d'extraire plus tard l'archive sur place avec peu d'espace libre : il faut environ un bloc de marge. Un seul bloc compresse le mieux, mais doit être extrait à côté de l'archive."
+msgid "Smaller solid blocks let Hatchling extract the archive in place later with little free space: it needs about one block of headroom. One single block compresses best but must be extracted next to the archive."
+msgstr "Des blocs solides plus petits permettent à Hatchling d'extraire plus tard l'archive sur place avec peu d'espace libre : il faut environ un bloc de marge. Un seul bloc compresse le mieux, mais doit être extrait à côté de l'archive."
 
 msgid "Encrypt file names (7z)"
 msgstr "Chiffrer les noms de fichiers (7z)"
@@ -319,8 +319,8 @@ msgstr "Actualiser"
 msgid "Help"
 msgstr "Aide"
 
-msgid "About HatchZip"
-msgstr "À propos de HatchZip"
+msgid "About Hatchling"
+msgstr "À propos de Hatchling"
 
 msgid "Add"
 msgstr "Ajouter"

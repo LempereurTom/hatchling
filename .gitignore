@@ -2,3 +2,4 @@
 # Agent worktrees and local tool state.
 /.claude/
 /target-app
+/dist

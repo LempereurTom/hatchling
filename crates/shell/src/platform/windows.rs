@@ -18,12 +18,12 @@ const BASE: &str = r"Software\Classes\SystemFileAssociations";
 /// Everything that is not an archive, and folders. A distinct verb name, so
 /// Explorer never merges it with the archive submenu.
 const ADD_KEYS: &[&str] = &[
-    r"Software\Classes\*\shell\HatchZip.Add",
-    r"Software\Classes\Directory\shell\HatchZip.Add",
+    r"Software\Classes\*\shell\Hatchling.Add",
+    r"Software\Classes\Directory\shell\Hatchling.Add",
 ];
 
 fn menu_key(ext: &str) -> String {
-    format!(r"{BASE}\.{ext}\shell\HatchZip")
+    format!(r"{BASE}\.{ext}\shell\Hatchling")
 }
 
 pub fn current_dirs() -> Result<Dirs> {
@@ -57,7 +57,7 @@ fn submenu<'a>(
     let (menu, _) = hkcu
         .create_subkey(path)
         .with_context(|| format!("creating HKCU\\{path}"))?;
-    menu.set_value("MUIVerb", &"HatchZip")?;
+    menu.set_value("MUIVerb", &"Hatchling")?;
     menu.set_value("Icon", &format!("\"{exe}\",0"))?;
     // An empty SubCommands value turns the entry into a submenu built
     // from its own `shell` key.

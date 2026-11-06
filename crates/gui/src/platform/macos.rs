@@ -15,7 +15,7 @@ pub const SHELL_MENU: bool = false;
 
 /// `~/Library/Application Support/HatchZip`.
 pub fn config_dir() -> Option<PathBuf> {
-    Some(std::env::home_dir()?.join("Library/Application Support/HatchZip"))
+    Some(std::env::home_dir()?.join("Library/Application Support/Hatchling"))
 }
 
 type OnOpen = Box<dyn Fn(PathBuf)>;

@@ -37,8 +37,8 @@ msgstr "मदद"
 msgid "Check for updates"
 msgstr "अपडेट देखें"
 
-msgid "About HatchZip"
-msgstr "HatchZip के बारे में"
+msgid "About Hatchling"
+msgstr "Hatchling के बारे में"
 
 msgid "Drop the archive to open it"
 msgstr "आर्काइव खोलने के लिए यहाँ छोड़ें"

@@ -23,8 +23,8 @@ use crate::text::{self, gb_text, parse_gb, plan_view};
 use crate::work::{Request, sentence};
 use crate::{AboutWindow, MainWindow, Mode, PlanView, Screen, TaskView, platform, shell};
 
-const REPO: &str = "https://github.com/xevrion/hatchzip";
-const RELEASES: &str = "https://github.com/xevrion/hatchzip/releases/latest";
+const REPO: &str = "https://github.com/LempereurTom/hatchling";
+const RELEASES: &str = "https://github.com/LempereurTom/hatchling/releases/latest";
 /// What the Open dialog offers. `.r00` is the second volume of an old-style
 /// RAR set; any volume opens the whole set.
 const ARCHIVE_EXTENSIONS: &[&str] = if hatchzip_core::archive::RAR_SUPPORTED {

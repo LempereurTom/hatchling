@@ -273,7 +273,7 @@ export component MainWindow inherits Window {
     callback check-for-updates();
     callback quit();
 
-    title: root.screen == Screen.opened ? root.archive-name + " - HatchZip" : "HatchZip";
+    title: root.screen == Screen.opened ? root.archive-name + " - Hatchling" : "Hatchling";
     preferred-width: 980px;
     preferred-height: 660px;
     min-width: 640px;
@@ -345,7 +345,7 @@ export component MainWindow inherits Window {
             }
             MenuSeparator { }
             MenuItem {
-                title: @tr("About HatchZip");
+                title: @tr("About Hatchling");
                 activated => {
                     root.about();
                 }

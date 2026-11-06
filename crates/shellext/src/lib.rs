@@ -1,7 +1,7 @@
 //! The "HatchZip" entry of the Windows 11 context menu, the one shown
 //! without "Show more options". Windows 11 only puts IExplorerCommand COM
 //! servers there, declared by a package; `packaging/windows/sparse` holds
-//! that package, which points at this DLL next to `hatchzip-gui.exe`.
+//! that package, which points at this DLL next to `hatchling.exe`.
 //!
 //! Each item only builds a command line and starts the GUI: nothing here
 //! touches a file, so a bug can't take Explorer down with it beyond a
@@ -68,7 +68,7 @@ fn install_dir() -> Option<&'static Path> {
 }
 
 fn gui() -> Option<PathBuf> {
-    install_dir().map(|d| d.join("hatchzip-gui.exe"))
+    install_dir().map(|d| d.join("hatchling.exe"))
 }
 
 fn french() -> bool {
@@ -76,15 +76,45 @@ fn french() -> bool {
     (unsafe { GetUserDefaultUILanguage() } & 0x3ff) == 0x0c
 }
 
+/// Whether extracting removes the archive, from the app's saved settings
+/// (on unless turned off). The menu says so in the entries, since people
+/// used to other extractors expect the archive to stay.
+fn removes_archive() -> bool {
+    let Some(appdata) = std::env::var_os("APPDATA") else {
+        return true;
+    };
+    let file = PathBuf::from(appdata)
+        .join("Hatchling")
+        .join("settings.json");
+    match std::fs::read_to_string(file) {
+        Ok(text) => !text
+            .chars()
+            .filter(|c| !c.is_whitespace())
+            .collect::<String>()
+            .contains("\"keep_archive\":true"),
+        Err(_) => true,
+    }
+}
+
 const ARCHIVE_EXTENSIONS: &[&str] = &[
     "zip", "7z", "rar", "tar", "tgz", "gz", "txz", "xz", "001", "r00",
 ];
 
+/// By name only. Explorer asks for every item and every menu line while the
+/// menu opens, so touching the disk here would make a large selection, or
+/// one on an offline network drive, freeze the menu. A folder named like an
+/// archive only gets entries that then report an error.
 fn is_archive(p: &Path) -> bool {
-    p.is_file()
-        && p.extension()
-            .and_then(OsStr::to_str)
-            .is_some_and(|e| ARCHIVE_EXTENSIONS.iter().any(|a| a.eq_ignore_ascii_case(e)))
+    p.extension()
+        .and_then(OsStr::to_str)
+        .is_some_and(|e| ARCHIVE_EXTENSIONS.iter().any(|a| a.eq_ignore_ascii_case(e)))
+}
+
+/// Runs `f`, turning a panic into an error. This DLL lives inside Explorer,
+/// where a panic crossing back into Windows would end the Explorer process:
+/// a bug here must only cost a menu entry.
+fn guard<T>(f: impl FnOnce() -> Result<T>) -> Result<T> {
+    std::panic::catch_unwind(std::panic::AssertUnwindSafe(f)).unwrap_or_else(|_| Err(E_FAIL.into()))
 }
 
 fn paths(items: Ref<IShellItemArray>) -> Vec<PathBuf> {
@@ -316,6 +346,12 @@ impl Item {
             archive_stem(paths)
         };
         let several = paths.len() > 1;
+        let removes = matches!(self, Item::ExtractHere | Item::ExtractTo) && removes_archive();
+        let (suffix_fr, suffix_en) = if removes {
+            (" (supprime l'archive)", " (removes the archive)")
+        } else {
+            ("", "")
+        };
         match (self, fr) {
             (Item::AddDialog, true) => "Ajouter à l'archive…".into(),
             (Item::AddDialog, false) => "Add to archive…".into(),
@@ -326,18 +362,30 @@ impl Item {
             (Item::AddEachZip, true) => "Ajouter chaque élément à son propre .zip".into(),
             (Item::AddEachZip, false) => "Add each item to its own .zip".into(),
             (Item::Separator, _) => String::new(),
-            (Item::Open, true) => "Ouvrir avec HatchZip".into(),
-            (Item::Open, false) => "Open with HatchZip".into(),
+            (Item::Open, true) => "Ouvrir avec Hatchling".into(),
+            (Item::Open, false) => "Open with Hatchling".into(),
             (Item::ExtractFiles, true) => "Extraire les fichiers…".into(),
             (Item::ExtractFiles, false) => "Extract files…".into(),
+            (Item::ExtractHere, true) if removes => "Extraire ici (supprime l'archive)".into(),
+            (Item::ExtractHere, false) if removes => "Extract here (removes the archive)".into(),
             (Item::ExtractHere, true) => "Extraire ici".into(),
             (Item::ExtractHere, false) => "Extract here".into(),
             (Item::ExtractHereKeep, true) => "Extraire ici (garder l'archive)".into(),
             (Item::ExtractHereKeep, false) => "Extract here (keep archive)".into(),
-            (Item::ExtractTo, true) if several => "Extraire chaque archive dans son dossier".into(),
-            (Item::ExtractTo, false) if several => "Extract each archive to its own folder".into(),
-            (Item::ExtractTo, true) => format!("Extraire vers \"{}\\\"", folder_stem(&paths[0])),
-            (Item::ExtractTo, false) => format!("Extract to \"{}\\\"", folder_stem(&paths[0])),
+            (Item::ExtractTo, true) if several => {
+                format!("Extraire chaque archive dans son dossier{suffix_fr}")
+            }
+            (Item::ExtractTo, false) if several => {
+                format!("Extract each archive to its own folder{suffix_en}")
+            }
+            (Item::ExtractTo, true) => match paths.first() {
+                Some(p) => format!("Extraire vers \"{}\\\"{suffix_fr}", folder_stem(p)),
+                None => "Extraire vers un nouveau dossier".into(),
+            },
+            (Item::ExtractTo, false) => match paths.first() {
+                Some(p) => format!("Extract to \"{}\\\"{suffix_en}", folder_stem(p)),
+                None => "Extract to a new folder".into(),
+            },
             (Item::Test, true) => "Tester l'archive".into(),
             (Item::Test, false) => "Test archive".into(),
         }
@@ -364,7 +412,7 @@ struct Root;
 
 impl IExplorerCommand_Impl for Root_Impl {
     fn GetTitle(&self, _: Ref<IShellItemArray>) -> Result<PWSTR> {
-        dup("HatchZip")
+        dup("Hatchling")
     }
     fn GetIcon(&self, _: Ref<IShellItemArray>) -> Result<PWSTR> {
         icon()
@@ -376,10 +424,12 @@ impl IExplorerCommand_Impl for Root_Impl {
         Ok(CLSID_ROOT)
     }
     fn GetState(&self, items: Ref<IShellItemArray>, _: BOOL) -> Result<u32> {
-        Ok(if paths(items).is_empty() {
-            ECS_HIDDEN.0 as u32
-        } else {
-            ECS_ENABLED.0 as u32
+        guard(|| {
+            Ok(if paths(items).is_empty() {
+                ECS_HIDDEN.0 as u32
+            } else {
+                ECS_ENABLED.0 as u32
+            })
         })
     }
     fn Invoke(&self, _: Ref<IShellItemArray>, _: Ref<IBindCtx>) -> Result<()> {
@@ -398,7 +448,7 @@ struct Sub(Item);
 
 impl IExplorerCommand_Impl for Sub_Impl {
     fn GetTitle(&self, items: Ref<IShellItemArray>) -> Result<PWSTR> {
-        dup(&self.0.title(&paths(items)))
+        guard(|| dup(&self.0.title(&paths(items))))
     }
     fn GetIcon(&self, _: Ref<IShellItemArray>) -> Result<PWSTR> {
         if self.0 == Item::Separator {
@@ -415,18 +465,22 @@ impl IExplorerCommand_Impl for Sub_Impl {
         ))
     }
     fn GetState(&self, items: Ref<IShellItemArray>, _: BOOL) -> Result<u32> {
-        Ok(if self.0.visible(&paths(items)) {
-            ECS_ENABLED.0 as u32
-        } else {
-            ECS_HIDDEN.0 as u32
+        guard(|| {
+            Ok(if self.0.visible(&paths(items)) {
+                ECS_ENABLED.0 as u32
+            } else {
+                ECS_HIDDEN.0 as u32
+            })
         })
     }
     fn Invoke(&self, items: Ref<IShellItemArray>, _: Ref<IBindCtx>) -> Result<()> {
-        let paths = paths(items);
-        if paths.is_empty() {
-            return Ok(());
-        }
-        launch(self.0.flags(), &paths)
+        guard(|| {
+            let paths = paths(items);
+            if paths.is_empty() {
+                return Ok(());
+            }
+            launch(self.0.flags(), &paths)
+        })
     }
     fn GetFlags(&self) -> Result<u32> {
         Ok(if self.0 == Item::Separator {

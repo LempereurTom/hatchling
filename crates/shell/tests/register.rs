@@ -156,9 +156,9 @@ fn explorer_menu_points_at_the_gui_and_goes_away_cleanly() {
     assert!(is_registered(&dirs));
     for ext in hatchzip_shell::EXTENSIONS {
         let menu = hkcu
-            .open_subkey(format!(r"{base}\.{ext}\shell\HatchZip"))
+            .open_subkey(format!(r"{base}\.{ext}\shell\Hatchling"))
             .unwrap();
-        assert_eq!(menu.get_value::<String, _>("MUIVerb").unwrap(), "HatchZip");
+        assert_eq!(menu.get_value::<String, _>("MUIVerb").unwrap(), "Hatchling");
         for (i, a) in ACTIONS.iter().enumerate() {
             let cmd = menu
                 .open_subkey(format!(r"shell\{:02}{}\command", i + 1, a.id))
@@ -173,7 +173,7 @@ fn explorer_menu_points_at_the_gui_and_goes_away_cleanly() {
     assert!(!is_registered(&dirs));
     for ext in hatchzip_shell::EXTENSIONS {
         assert!(
-            hkcu.open_subkey(format!(r"{base}\.{ext}\shell\HatchZip"))
+            hkcu.open_subkey(format!(r"{base}\.{ext}\shell\Hatchling"))
                 .is_err()
         );
     }

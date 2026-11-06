@@ -9,6 +9,11 @@ repository.workspace = true
 homepage.workspace = true
 publish = false
 
+# The program people run and see in Task Manager.
+[[bin]]
+name = "hatchling"
+path = "src/main.rs"
+
 [dependencies]
 hatchzip-core.workspace = true
 hatchzip-shell = { path = "../shell" }

@@ -6,10 +6,10 @@ pub const SHELL_MENU_NAME: super::ShellMenuName = super::ShellMenuName::Explorer
 /// Explorer, through the per-user registry hive.
 pub const SHELL_MENU: bool = true;
 
-/// `%APPDATA%\HatchZip`, which roams with the user's profile.
+/// `%APPDATA%\Hatchling`, which roams with the user's profile.
 pub fn config_dir() -> Option<PathBuf> {
     let appdata = std::env::var_os("APPDATA").filter(|v| !v.is_empty())?;
-    Some(PathBuf::from(appdata).join("HatchZip"))
+    Some(PathBuf::from(appdata).join("Hatchling"))
 }
 
 /// Explorer passes the files as arguments here, so there is nothing to
@@ -29,10 +29,21 @@ pub fn roots() -> Vec<PathBuf> {
 pub fn recycle(paths: &[PathBuf]) -> anyhow::Result<()> {
     use std::os::windows::ffi::OsStrExt;
     use windows_sys::Win32::UI::Shell::{
-        FO_DELETE, FOF_ALLOWUNDO, FOF_NOCONFIRMATION, FOF_SILENT, SHFILEOPSTRUCTW, SHFileOperationW,
+        FO_DELETE, FOF_ALLOWUNDO, FOF_NOCONFIRMATION, FOF_SILENT, FOF_WANTNUKEWARNING,
+        SHFILEOPSTRUCTW, SHFileOperationW,
     };
     if paths.is_empty() {
         return Ok(());
+    }
+    // SHFileOperation reads relative paths against the current folder.
+    if let Some(p) = paths
+        .iter()
+        .find(|p| !p.is_absolute() || p.parent().is_none())
+    {
+        anyhow::bail!(
+            "Refusing to delete {}: not a file or folder inside a drive.",
+            p.display()
+        );
     }
     // A list of NUL-terminated paths, ended by an empty one.
     let mut from: Vec<u16> = Vec::new();
@@ -46,7 +57,10 @@ pub fn recycle(paths: &[PathBuf]) -> anyhow::Result<()> {
         wFunc: FO_DELETE,
         pFrom: from.as_ptr(),
         pTo: std::ptr::null(),
-        fFlags: (FOF_ALLOWUNDO | FOF_NOCONFIRMATION | FOF_SILENT) as u16,
+        // The browser already asked. Where there is no Recycle Bin (USB
+        // sticks, network drives) Windows would delete for good without a
+        // word; FOF_WANTNUKEWARNING makes it ask first in that case.
+        fFlags: (FOF_ALLOWUNDO | FOF_NOCONFIRMATION | FOF_SILENT | FOF_WANTNUKEWARNING) as u16,
         fAnyOperationsAborted: 0,
         hNameMappings: std::ptr::null_mut(),
         lpszProgressTitle: std::ptr::null(),

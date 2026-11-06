@@ -203,7 +203,7 @@ export component ExplorerWindow inherits Window {
     public pure function menu-added() -> string { return @tr("Context menu entries added."); }
     public pure function menu-removed() -> string { return @tr("Context menu entries removed."); }
 
-    title: root.in-archive ? root.archive-title + " - HatchZip" : (root.location == "" ? "HatchZip" : root.location + " - HatchZip");
+    title: root.in-archive ? root.archive-title + " - Hatchling" : (root.location == "" ? "Hatchling" : root.location + " - Hatchling");
     preferred-width: 1000px;
     preferred-height: 680px;
     min-width: 640px;
@@ -320,7 +320,7 @@ export component ExplorerWindow inherits Window {
         Menu {
             title: @tr("Help");
             MenuItem {
-                title: @tr("About HatchZip");
+                title: @tr("About Hatchling");
                 activated => { root.about(); }
             }
         }

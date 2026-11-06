@@ -1,113 +1,122 @@
-# Installs this build of HatchZip for the current user, without admin rights:
-# copies the programs to %LOCALAPPDATA%\Programs\HatchZip Fork, adds the
-# classic right-click menu, a Start menu shortcut, and the Windows 11
-# top-level menu entry through a signed sparse package.
+# Installs Hatchling for the current user, from the folder of the release
+# zip (build-release.ps1 makes it). No administrator rights are needed for
+# the program, the Start menu shortcut, the classic right-click menu and the
+# entry in Settings > Apps.
 #
-# The package is signed with a certificate made on this computer. Windows
-# only accepts it once that certificate is trusted, which takes one run of
-# trust-certificate.ps1 as administrator; until then everything else works
-# and the entry stays under "Show more options".
+# The Windows 11 top-level menu entry comes from a signed package. Windows
+# accepts it once the certificate shipped next to it is trusted, which asks
+# for administrator rights once; the person can say no and keep the rest.
 #
-#   powershell -ExecutionPolicy Bypass -File packaging\windows\install.ps1
+#   Installer.cmd, or: powershell -ExecutionPolicy Bypass -File install.ps1
 
 param(
-    [string]$Build = (Join-Path $PSScriptRoot "..\..\target\release")
+    # Don't ask about the Windows 11 entry; install it only if the
+    # certificate is already trusted.
+    [switch]$NoPrompt
 )
 
 $ErrorActionPreference = "Stop"
-$Build = (Resolve-Path $Build).Path
-$Dest = Join-Path $env:LOCALAPPDATA "Programs\HatchZip Fork"
-$Subject = "CN=HatchZip Fork"
-$PackageName = "HatchZipFork.ContextMenu"
+$Here = $PSScriptRoot
+if (-not $env:LOCALAPPDATA) { throw "LOCALAPPDATA is not set; nothing was installed." }
+$Dest = Join-Path $env:LOCALAPPDATA "Programs\Hatchling"
+$PackageName = "Hatchling.ContextMenu"
+$UninstallKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\Hatchling"
 
-foreach ($f in "hatchzip-gui.exe", "hatchzip.exe", "hatchzip_shellext.dll") {
-    if (-not (Test-Path (Join-Path $Build $f))) {
-        throw "$f is missing from $Build. Run: cargo build --release --features rar"
+$files = "hatchling.exe", "hatchzip.exe", "hatchzip_shellext.dll", "uninstall.ps1", "Desinstaller.cmd"
+foreach ($f in $files) {
+    if (-not (Test-Path (Join-Path $Here $f))) {
+        throw "$f is missing next to install.ps1. Extract the whole zip, then run Installer.cmd again."
     }
 }
 
-# Explorer holds the DLL while the package is registered, so it has to go
-# before the files can be replaced.
+Write-Host "Installation de Hatchling..."
+
+# Explorer holds the DLL while the package is registered, so it goes first.
 Get-AppxPackage -Name $PackageName | Remove-AppxPackage
-Get-Process hatchzip-gui -ErrorAction SilentlyContinue |
-    Where-Object { $_.Path -like "$Dest*" } | Stop-Process -Force
+Get-Process hatchling -ErrorAction SilentlyContinue |
+    Where-Object { $_.Path -and $_.Path.StartsWith($Dest, [StringComparison]::OrdinalIgnoreCase) } |
+    Stop-Process -Force
 
 New-Item -ItemType Directory -Force $Dest | Out-Null
 $dllTarget = Join-Path $Dest "hatchzip_shellext.dll"
 if (Test-Path $dllTarget) {
-    # Explorer may still have it loaded; a locked DLL can be renamed, not
-    # overwritten, and the old copy goes away at the next restart.
+    # Explorer may still have it loaded: a loaded DLL can be renamed, not
+    # replaced, and the old copy is removed by the next install.
     try { Remove-Item $dllTarget -Force } catch {
         Rename-Item $dllTarget ("hatchzip_shellext.old." + [guid]::NewGuid().ToString("N") + ".dll")
     }
 }
 Get-ChildItem $Dest -Filter "hatchzip_shellext.old.*.dll" -ErrorAction SilentlyContinue |
     ForEach-Object { try { Remove-Item $_.FullName -Force } catch {} }
-Copy-Item (Join-Path $Build "hatchzip-gui.exe") $Dest -Force
-Copy-Item (Join-Path $Build "hatchzip.exe") $Dest -Force
-Copy-Item (Join-Path $Build "hatchzip.exe") (Join-Path $Dest "hz.exe") -Force
-Copy-Item (Join-Path $Build "hatchzip_shellext.dll") $Dest -Force
-$gui = Join-Path $Dest "hatchzip-gui.exe"
 
-# Classic menu ("Show more options"), per user.
-& $gui --register-shell | Out-Host
+$copy = $files + "Hatchling-ContextMenu.msix", "Hatchling.cer"
+foreach ($f in $copy) {
+    $src = Join-Path $Here $f
+    if (Test-Path $src) { Copy-Item $src $Dest -Force }
+}
+if (Test-Path (Join-Path $Here "Assets")) { Copy-Item (Join-Path $Here "Assets") $Dest -Recurse -Force }
+# Downloaded files carry a mark that makes Windows warn on every launch.
+Get-ChildItem $Dest -Recurse -File | Unblock-File
+$gui = Join-Path $Dest "hatchling.exe"
+
+# Classic menu ("Show more options" on Windows 11, the only menu on 10).
+& $gui --register-shell | Out-Null
 
 # Start menu.
-$lnk = Join-Path ([Environment]::GetFolderPath("Programs")) "HatchZip.lnk"
+$lnk = Join-Path ([Environment]::GetFolderPath("Programs")) "Hatchling.lnk"
 $shell = New-Object -ComObject WScript.Shell
 $s = $shell.CreateShortcut($lnk)
 $s.TargetPath = $gui
-$s.WorkingDirectory = $Dest
+$s.WorkingDirectory = [Environment]::GetFolderPath("MyDocuments")
 $s.IconLocation = "$gui,0"
+$s.Description = "Extraire et creer des archives ZIP, 7z, RAR"
 $s.Save()
 
-# The sparse package for the Windows 11 menu.
-$sdk = Get-ChildItem "${env:ProgramFiles(x86)}\Windows Kits\10\bin\10.*\x64\makeappx.exe" -ErrorAction SilentlyContinue |
-    Sort-Object FullName -Descending | Select-Object -First 1
-if (-not $sdk) {
-    Write-Warning "The Windows SDK (makeappx.exe) was not found, so the Windows 11 top-level entry is skipped."
-    return
-}
-$makeappx = $sdk.FullName
-$signtool = Join-Path $sdk.DirectoryName "signtool.exe"
+# Settings > Apps, so it uninstalls like any other program.
+$version = ((& (Join-Path $Dest "hatchzip.exe") --version) -split " ")[-1].Trim()
+New-Item -Path $UninstallKey -Force | Out-Null
+$uninstall = "powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$Dest\uninstall.ps1`""
+@{
+    DisplayName     = "Hatchling"
+    DisplayVersion  = $version
+    Publisher       = "Hatchling (fork de HatchZip)"
+    DisplayIcon     = "$gui,0"
+    InstallLocation = $Dest
+    UninstallString = $uninstall
+    URLInfoAbout    = "https://github.com/LempereurTom/hatchling"
+}.GetEnumerator() | ForEach-Object { Set-ItemProperty $UninstallKey -Name $_.Key -Value $_.Value }
+Set-ItemProperty $UninstallKey -Name NoModify -Value 1 -Type DWord
+Set-ItemProperty $UninstallKey -Name NoRepair -Value 1 -Type DWord
 
-$version = (& (Join-Path $Dest "hatchzip.exe") --version).Split(" ")[-1].Trim()
-$stage = Join-Path $env:TEMP "hatchzip-sparse"
-Remove-Item $stage -Recurse -Force -ErrorAction SilentlyContinue
-New-Item -ItemType Directory -Force (Join-Path $stage "Assets") | Out-Null
-(Get-Content (Join-Path $PSScriptRoot "sparse\AppxManifest.xml") -Raw).Replace("{VERSION}", "$version.0") |
-    Set-Content (Join-Path $stage "AppxManifest.xml") -Encoding utf8
-$png = Join-Path $PSScriptRoot "..\..\assets\icon\png"
-Copy-Item (Join-Path $png "hatchzip-48.png") (Join-Path $stage "Assets\StoreLogo.png")
-Copy-Item (Join-Path $png "hatchzip-256.png") (Join-Path $stage "Assets\Square150x150Logo.png")
-Copy-Item (Join-Path $png "hatchzip-48.png") (Join-Path $stage "Assets\Square44x44Logo.png")
-# The external location needs the same assets the manifest names.
-Copy-Item (Join-Path $stage "Assets") $Dest -Recurse -Force
+Write-Host "Hatchling est installe : menu Demarrer, et clic droit sous 'Afficher d'autres options'."
 
-$msix = Join-Path $Dest "HatchZip-ContextMenu.msix"
-& $makeappx pack /d $stage /p $msix /nv /o | Out-Null
-if ($LASTEXITCODE -ne 0) { throw "makeappx failed ($LASTEXITCODE)" }
+# The Windows 11 top-level entry.
+$msix = Join-Path $Dest "Hatchling-ContextMenu.msix"
+$cer = Join-Path $Dest "Hatchling.cer"
+$windows11 = [Environment]::OSVersion.Version.Build -ge 22000
+if (-not $windows11 -or -not (Test-Path $msix) -or -not (Test-Path $cer)) { return }
 
-$cert = Get-ChildItem Cert:\CurrentUser\My | Where-Object { $_.Subject -eq $Subject } | Select-Object -First 1
-if (-not $cert) {
-    $cert = New-SelfSignedCertificate -Type Custom -Subject $Subject -FriendlyName "HatchZip Fork" `
-        -KeyUsage DigitalSignature -CertStoreLocation Cert:\CurrentUser\My `
-        -TextExtension @("2.5.29.37={text}1.3.6.1.5.5.7.3.3", "2.5.29.19={text}")
-}
-Export-Certificate -Cert $cert -FilePath (Join-Path $Dest "HatchZip-Fork.cer") | Out-Null
-& $signtool sign /fd SHA256 /sha1 $cert.Thumbprint $msix | Out-Null
-if ($LASTEXITCODE -ne 0) { throw "signtool failed ($LASTEXITCODE)" }
+$cert = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2($cer)
+$isTrusted = { [bool](Get-ChildItem Cert:\LocalMachine\TrustedPeople | Where-Object { $_.Thumbprint -eq $cert.Thumbprint }) }
 
-$trusted = Get-ChildItem Cert:\LocalMachine\TrustedPeople -ErrorAction SilentlyContinue |
-    Where-Object { $_.Thumbprint -eq $cert.Thumbprint }
-if (-not $trusted) {
+if (-not (& $isTrusted) -and -not $NoPrompt) {
     Write-Host ""
-    Write-Host "HatchZip is installed. The entry is under 'Show more options' for now."
-    Write-Host "For the Windows 11 top-level entry, run once as administrator:"
-    Write-Host "  powershell -ExecutionPolicy Bypass -File `"$(Join-Path $PSScriptRoot 'trust-certificate.ps1')`""
-    Write-Host "then run this script again."
-    return
+    Write-Host "Pour afficher Hatchling directement dans le menu clic droit de Windows 11"
+    Write-Host "(sans passer par 'Afficher d'autres options'), Windows doit faire confiance"
+    Write-Host "au certificat du projet. Il le demande une seule fois, avec les droits administrateur."
+    $answer = Read-Host "L'activer maintenant ? (O/N)"
+    if ($answer -match "^[oOyY]") {
+        $cmd = "Import-Certificate -FilePath '$cer' -CertStoreLocation Cert:\LocalMachine\TrustedPeople | Out-Null"
+        try {
+            Start-Process powershell.exe -Verb RunAs -Wait -ArgumentList "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", $cmd
+        } catch {
+            Write-Host "Autorisation refusee : l'entree reste sous 'Afficher d'autres options'."
+        }
+    }
 }
 
-Add-AppxPackage -Path $msix -ExternalLocation $Dest
-Write-Host "HatchZip is installed, with its Windows 11 top-level menu entry."
+if (& $isTrusted) {
+    Add-AppxPackage -Path $msix -ExternalLocation $Dest
+    Write-Host "Entree Hatchling ajoutee au menu clic droit de Windows 11."
+    Write-Host "Elle apparait dans les nouvelles fenetres de l'Explorateur."
+}

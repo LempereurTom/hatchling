@@ -2,7 +2,7 @@
 //! one breaks every installed right-click entry. Each task form takes one
 //! archive or several, which run one after another.
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use clap::{ArgGroup, Parser};
 
@@ -159,8 +159,11 @@ fn expand_lists(paths: Vec<PathBuf>) -> Vec<PathBuf> {
     let mut out = Vec::new();
     for p in paths {
         let s = p.to_string_lossy();
+        // Only lists the menu itself wrote: in the temporary folder, so a
+        // path given by anything else is never read or deleted.
         if let Some(list) = s.strip_prefix('@')
             && list.ends_with(".hzlist")
+            && Path::new(list).parent() == Some(std::env::temp_dir().as_path())
             && let Ok(text) = std::fs::read_to_string(list)
         {
             let _ = std::fs::remove_file(list);

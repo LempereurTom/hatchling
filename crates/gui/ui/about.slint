@@ -6,7 +6,7 @@ export component AboutWindow inherits Window {
     callback open-link();
     callback dismiss();
 
-    title: "About HatchZip";
+    title: "About Hatchling";
     preferred-width: 420px;
     min-width: 380px;
     background: Palette.background;
@@ -29,7 +29,7 @@ export component AboutWindow inherits Window {
                 alignment: center;
                 spacing: 2px;
                 Text {
-                    text: "HatchZip";
+                    text: "Hatchling";
                     font-size: 20px;
                     font-weight: 600;
                 }
@@ -40,7 +40,7 @@ export component AboutWindow inherits Window {
             }
         }
         Text {
-            text: "Extracts large archives in place. The archive is removed progressively during extraction, so only the space for the extracted files is required.";
+            text: "Extracts large archives in place, and creates ZIP and 7z archives. Based on HatchZip by xevrion, whose engine removes the archive progressively during extraction, so only the space for the extracted files is required.";
             wrap: word-wrap;
         }
         Text {
@@ -49,7 +49,7 @@ export component AboutWindow inherits Window {
             wrap: word-wrap;
         }
         link := Text {
-            text: "github.com/xevrion/hatchzip";
+            text: "github.com/LempereurTom/hatchling";
             color: Palette.accent-background;
             TouchArea {
                 mouse-cursor: pointer;

@@ -31,9 +31,9 @@ fn main() {
         println!("cargo:rerun-if-changed={icon}");
         let mut res = winresource::WindowsResource::new();
         res.set_icon(icon)
-            .set("ProductName", "HatchZip")
-            .set("FileDescription", "HatchZip")
-            .set("CompanyName", "HatchZip")
+            .set("ProductName", "Hatchling")
+            .set("FileDescription", "Hatchling")
+            .set("CompanyName", "Hatchling")
             .set("LegalCopyright", "MIT OR Apache-2.0");
         res.compile()
             .expect("embedding the Windows icon and version");
