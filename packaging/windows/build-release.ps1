@@ -38,7 +38,7 @@ New-Item -ItemType Directory -Force (Join-Path $stage "Assets") | Out-Null
 foreach ($f in "hatchling.exe", "hatchzip.exe", "hatchzip_shellext.dll") {
     Copy-Item (Join-Path $bin $f) $stage
 }
-foreach ($f in "install.ps1", "uninstall.ps1", "Installer.cmd", "Desinstaller.cmd", "LISEZMOI.txt") {
+foreach ($f in "install.ps1", "uninstall.ps1", "menu11.ps1", "Installer.cmd", "Desinstaller.cmd", "LISEZMOI.txt") {
     Copy-Item (Join-Path $PSScriptRoot $f) $stage
 }
 foreach ($f in "LICENSE-MIT", "LICENSE-APACHE", "LICENSE-UNRAR") {
@@ -80,6 +80,18 @@ Compress-Archive -Path $stage -DestinationPath $zip
 $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
 # LF, so `sha256sum -c` reads it on Linux and macOS too.
 [IO.File]::WriteAllText("$zip.sha256", "$hash  $(Split-Path $zip -Leaf)`n")
+# The setup, for people who prefer one file and for winget.
+$iscc = @("$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe", "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe") |
+    Where-Object { Test-Path $_ } | Select-Object -First 1
+if (-not $iscc) { throw "Inno Setup 6 is needed for the setup: winget install JRSoftware.InnoSetup --scope user" }
+& $iscc /Q "/DPayload=$stage" "/DAppVersion=$version" (Join-Path $PSScriptRoot "hatchling.iss")
+if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed" }
+$setup = Join-Path $dist "Hatchling-$version-x64-setup.exe"
+$setupHash = (Get-FileHash $setup -Algorithm SHA256).Hash.ToLower()
+[IO.File]::WriteAllText("$setup.sha256", "$setupHash  $(Split-Path $setup -Leaf)`n")
+
+Write-Host $setup
+Write-Host "SHA-256 $setupHash"
 Write-Host $zip
 Write-Host "SHA-256 $hash"
 Write-Host "Certificate thumbprint $($cert.Thumbprint)"

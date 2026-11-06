@@ -31,6 +31,16 @@ foreach ($f in $files) {
 
 Write-Host "Installation de Hatchling..."
 
+# A copy installed by the setup is removed first, so Settings > Apps never
+# lists Hatchling twice. Its uninstaller keeps the settings.
+$setupKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\io.github.lempereurtom.hatchling_is1"
+if (Test-Path $setupKey) {
+    $unins = (Get-ItemProperty $setupKey).UninstallString -replace '"', ''
+    if ($unins -and (Test-Path $unins)) {
+        Start-Process $unins -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART" -Wait
+    }
+}
+
 # Explorer holds the DLL while the package is registered, so it goes first.
 Get-AppxPackage -Name $PackageName | Remove-AppxPackage
 Get-Process hatchling -ErrorAction SilentlyContinue |

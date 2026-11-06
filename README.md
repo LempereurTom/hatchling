@@ -82,11 +82,11 @@ Le fonctionnement du moteur est expliqué dans [docs/how-it-works.md](docs/how-i
 
 ## Installation (Windows 10 et 11)
 
-1. Téléchargez **`Hatchling-x.y.z-x64.zip`** dans les [Releases](https://github.com/LempereurTom/hatchling/releases/latest).
-2. Clic droit sur le zip > **Extraire tout**.
-3. Double-cliquez sur **`Installer.cmd`**.
+Téléchargez **`Hatchling-x.y.z-x64-setup.exe`** dans les [Releases](https://github.com/LempereurTom/hatchling/releases/latest) et lancez-le. C'est tout.
 
-C'est tout. Hatchling s'installe pour votre compte uniquement, dans `%LOCALAPPDATA%\Programs\Hatchling`, avec :
+Sans installeur : téléchargez plutôt `Hatchling-x.y.z-x64.zip`, faites clic droit > **Extraire tout**, puis double-cliquez sur **`Installer.cmd`**.
+
+Les deux méthodes donnent le même résultat. Hatchling s'installe pour votre compte uniquement, dans `%LOCALAPPDATA%\Programs\Hatchling`, avec :
 - un raccourci « Hatchling » dans le menu Démarrer ;
 - le menu clic droit ;
 - une entrée dans **Paramètres > Applications**, pour le désinstaller comme n'importe quel programme.
@@ -101,7 +101,7 @@ Ce certificat est auto-signé (pas d'autorité de certification payante). L'appr
 
 ### Avertissement de Windows au premier lancement
 
-Le programme n'est pas signé par une autorité payante. En lançant `Installer.cmd`, Windows peut afficher « Windows a protégé votre ordinateur » : cliquez sur **Informations complémentaires**, puis **Exécuter quand même**. L'installeur retire ensuite cette marque des fichiers installés, et l'avertissement ne revient plus.
+Le programme n'est pas signé par une autorité payante. En lançant le setup ou `Installer.cmd`, Windows peut afficher « Windows a protégé votre ordinateur » : cliquez sur **Informations complémentaires**, puis **Exécuter quand même**. L'installeur retire ensuite cette marque des fichiers installés, et l'avertissement ne revient plus.
 
 ### À savoir avant d'extraire
 
