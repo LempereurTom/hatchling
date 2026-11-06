@@ -78,7 +78,8 @@ $zip = Join-Path $dist "Hatchling-$version-x64.zip"
 Remove-Item $zip -ErrorAction SilentlyContinue
 Compress-Archive -Path $stage -DestinationPath $zip
 $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
-Set-Content "$zip.sha256" "$hash  $(Split-Path $zip -Leaf)" -Encoding ascii
+# LF, so `sha256sum -c` reads it on Linux and macOS too.
+[IO.File]::WriteAllText("$zip.sha256", "$hash  $(Split-Path $zip -Leaf)`n")
 Write-Host $zip
 Write-Host "SHA-256 $hash"
 Write-Host "Certificate thumbprint $($cert.Thumbprint)"
