@@ -1933,7 +1933,7 @@ dependencies = [
 
 [[package]]
 name = "hatchzip"
-version = "0.1.9"
+version = "0.2.0"
 dependencies = [
  "anstream",
  "anstyle",
@@ -1958,7 +1958,7 @@ dependencies = [
 
 [[package]]
 name = "hatchzip-core"
-version = "0.1.9"
+version = "0.2.0"
 dependencies = [
  "aes",
  "anyhow",
@@ -1984,7 +1984,7 @@ dependencies = [
 
 [[package]]
 name = "hatchzip-gui"
-version = "0.1.9"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "clap",
@@ -2010,7 +2010,7 @@ dependencies = [
 
 [[package]]
 name = "hatchzip-shell"
-version = "0.1.9"
+version = "0.2.0"
 dependencies = [
  "anyhow",
  "tempfile",
@@ -2019,7 +2019,7 @@ dependencies = [
 
 [[package]]
 name = "hatchzip-shellext"
-version = "0.1.9"
+version = "0.2.0"
 dependencies = [
  "windows",
  "windows-core",
