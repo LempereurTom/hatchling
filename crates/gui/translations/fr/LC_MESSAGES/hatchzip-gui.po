@@ -1,0 +1,669 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: fr\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+msgid "Creating {}"
+msgstr "Création de {}"
+
+msgid "Testing {}"
+msgstr "Test de {}"
+
+msgid "Deleting the archived files…"
+msgstr "Suppression des fichiers archivés…"
+
+msgid "Listing files…"
+msgstr "Liste des fichiers…"
+
+msgid "{} of {}"
+msgstr "{} sur {}"
+
+msgid "{}/s, {} elapsed, {} left"
+msgstr "{}/s, {} écoulé, {} restant"
+
+msgid "{} files, {} compressed to {} ({}%)."
+msgstr "{} fichiers, {} compressés en {} ({} %)."
+
+msgid "Archive {} of {}"
+msgstr "Archive {} sur {}"
+
+msgid "Password set: the archive will be encrypted with AES-256."
+msgstr "Mot de passe défini : l'archive sera chiffrée en AES-256."
+
+msgid "No password"
+msgstr "Pas de mot de passe"
+
+msgid "The passwords do not match."
+msgstr "Les mots de passe ne correspondent pas."
+
+msgid "Enter a volume size such as 700 MB or 4 GB."
+msgstr "Indiquez une taille de volume, par exemple 700 Mo ou 4 Go."
+
+msgid "Cancelled. The partial archive was removed and the files were not touched."
+msgstr "Annulé. L'archive incomplète a été supprimée et les fichiers n'ont pas été modifiés."
+
+msgid "Archive name"
+msgstr "Nom de l'archive"
+
+msgid "Saved as the default settings."
+msgstr "Enregistré comme paramètres par défaut."
+
+msgid "Store"
+msgstr "Stockage"
+
+msgid "Fastest"
+msgstr "La plus rapide"
+
+msgid "Fast"
+msgstr "Rapide"
+
+msgid "Normal"
+msgstr "Normale"
+
+msgid "Good"
+msgstr "Bonne"
+
+msgid "Best"
+msgstr "Meilleure"
+
+msgid "Archive name and parameters"
+msgstr "Nom et paramètres de l'archive"
+
+msgid "General"
+msgstr "Général"
+
+msgid "Recent archive names"
+msgstr "Noms d'archive récents"
+
+msgid "Browse…"
+msgstr "Parcourir…"
+
+msgid "Archive format"
+msgstr "Format de l'archive"
+
+msgid "RAR can be opened but not created: the format is proprietary."
+msgstr "Le RAR peut être ouvert mais pas créé : le format est propriétaire."
+
+msgid "Archiving options"
+msgstr "Options d'archivage"
+
+msgid "Delete files after archiving"
+msgstr "Supprimer les fichiers après l'archivage"
+
+msgid "Test archived files"
+msgstr "Tester les fichiers archivés"
+
+msgid "Put each file to separate archive"
+msgstr "Mettre chaque fichier dans une archive séparée"
+
+msgid "Compression method"
+msgstr "Méthode de compression"
+
+msgid "Split to volumes, size"
+msgstr "Fractionner en volumes, taille"
+
+msgid "No splitting"
+msgstr "Pas de fractionnement"
+
+msgid "Custom"
+msgstr "Personnalisée"
+
+msgid "e.g. 2 GB"
+msgstr "ex. 2 Go"
+
+msgid "Volume size"
+msgstr "Taille de volume"
+
+msgid "Set password…"
+msgstr "Définir le mot de passe…"
+
+msgid "Save as default"
+msgstr "Enregistrer par défaut"
+
+msgid "Advanced"
+msgstr "Avancé"
+
+msgid "Solid block size (7z)"
+msgstr "Taille de bloc solide (7z)"
+
+msgid "Non-solid"
+msgstr "Non solide"
+
+msgid "Solid (one block)"
+msgstr "Solide (un seul bloc)"
+
+msgid "Threads (0 = one per core)"
+msgstr "Threads (0 = un par cœur)"
+
+msgid "Smaller solid blocks let HatchZip extract the archive in place later with little free space: it needs about one block of headroom. One single block compresses best but must be extracted next to the archive."
+msgstr "Des blocs solides plus petits permettent à HatchZip d'extraire plus tard l'archive sur place avec peu d'espace libre : il faut environ un bloc de marge. Un seul bloc compresse le mieux, mais doit être extrait à côté de l'archive."
+
+msgid "Encrypt file names (7z)"
+msgstr "Chiffrer les noms de fichiers (7z)"
+
+msgid "Files"
+msgstr "Fichiers"
+
+msgid "Files to add"
+msgstr "Fichiers à ajouter"
+
+msgid "Comment"
+msgstr "Commentaire"
+
+msgid "Archive comment"
+msgstr "Commentaire de l'archive"
+
+msgid "Comments are only stored in ZIP archives."
+msgstr "Les commentaires ne sont enregistrés que dans les archives ZIP."
+
+msgid "Cancel"
+msgstr "Annuler"
+
+msgid "Continue"
+msgstr "Continuer"
+
+msgid "Pause"
+msgstr "Pause"
+
+msgid "Open folder"
+msgstr "Ouvrir le dossier"
+
+msgid "Close"
+msgstr "Fermer"
+
+msgid "Enter password"
+msgstr "Entrez le mot de passe"
+
+msgid "Reenter password for verification"
+msgstr "Entrez à nouveau le mot de passe pour vérification"
+
+msgid "Show password"
+msgstr "Afficher le mot de passe"
+
+msgid "Remove password"
+msgstr "Retirer le mot de passe"
+
+msgid "Name"
+msgstr "Nom"
+
+msgid "Size"
+msgstr "Taille"
+
+msgid "File folder"
+msgstr "Dossier de fichiers"
+
+msgid "Parent folder"
+msgstr "Dossier parent"
+
+msgid "Local disk"
+msgstr "Disque local"
+
+msgid "{} file"
+msgstr "Fichier {}"
+
+msgid "{} archive"
+msgstr "Archive {}"
+
+msgid "File"
+msgstr "Fichier"
+
+msgid "This PC"
+msgstr "Ce PC"
+
+msgid "Total {} folders and {} in {} files"
+msgstr "Total : {} dossiers et {} dans {} fichiers"
+
+msgid "Selected {} in {} files"
+msgstr "Sélection : {} dans {} fichiers"
+
+msgid "Opening {}…"
+msgstr "Ouverture de {}…"
+
+msgid "Move {} selected items to the Recycle Bin?"
+msgstr "Déplacer les {} éléments sélectionnés vers la Corbeille ?"
+
+msgid "Select one or more files or folders first."
+msgstr "Sélectionnez d'abord un ou plusieurs fichiers ou dossiers."
+
+msgid "Select one or more archives first."
+msgstr "Sélectionnez d'abord une ou plusieurs archives."
+
+msgid "Select a file to view it."
+msgstr "Sélectionnez un fichier pour l'afficher."
+
+msgid "Archive: {}\nFormat: {}\nFiles: {}\nFolders: {}\nTotal size: {}\nPacked size: {}\nRatio: {}%\nEncrypted: {}"
+msgstr "Archive : {}\nFormat : {}\nFichiers : {}\nDossiers : {}\nTaille totale : {}\nTaille compressée : {}\nTaux : {} %\nChiffrée : {}"
+
+msgid "{} selected items\nFiles: {}\nFolders: {}\nTotal size: {}"
+msgstr "{} éléments sélectionnés\nFichiers : {}\nDossiers : {}\nTaille totale : {}"
+
+msgid "Yes"
+msgstr "Oui"
+
+msgid "No"
+msgstr "Non"
+
+msgid "Change folder"
+msgstr "Changer de dossier"
+
+msgid "Open archive"
+msgstr "Ouvrir une archive"
+
+msgid "Archives"
+msgstr "Archives"
+
+msgid "All files"
+msgstr "Tous les fichiers"
+
+msgid "Context menu entries added."
+msgstr "Entrées du menu contextuel ajoutées."
+
+msgid "Context menu entries removed."
+msgstr "Entrées du menu contextuel supprimées."
+
+msgid "Open archive…"
+msgstr "Ouvrir une archive…"
+
+msgid "Change folder…"
+msgstr "Changer de dossier…"
+
+msgid "Select all"
+msgstr "Tout sélectionner"
+
+msgid "Quit"
+msgstr "Quitter"
+
+msgid "Commands"
+msgstr "Commandes"
+
+msgid "Add files to archive"
+msgstr "Ajouter des fichiers à l'archive"
+
+msgid "Extract to the specified folder"
+msgstr "Extraire vers le dossier spécifié"
+
+msgid "Extract without confirmation"
+msgstr "Extraire sans confirmation"
+
+msgid "Extract each archive to its own folder"
+msgstr "Extraire chaque archive dans son dossier"
+
+msgid "View file"
+msgstr "Afficher le fichier"
+
+msgid "Delete files"
+msgstr "Supprimer les fichiers"
+
+msgid "Show information"
+msgstr "Afficher les informations"
+
+msgid "Favorites"
+msgstr "Favoris"
+
+msgid "Add to favorites…"
+msgstr "Ajouter aux favoris…"
+
+msgid "Remove this folder from favorites"
+msgstr "Retirer ce dossier des favoris"
+
+msgid "Options"
+msgstr "Options"
+
+msgid "Show in the Explorer context menu"
+msgstr "Afficher dans le menu contextuel de l'Explorateur"
+
+msgid "Refresh"
+msgstr "Actualiser"
+
+msgid "Help"
+msgstr "Aide"
+
+msgid "About HatchZip"
+msgstr "À propos de HatchZip"
+
+msgid "Add"
+msgstr "Ajouter"
+
+msgid "Extract To"
+msgstr "Extraire vers"
+
+msgid "Test"
+msgstr "Tester"
+
+msgid "View"
+msgstr "Afficher"
+
+msgid "Delete"
+msgstr "Supprimer"
+
+msgid "Info"
+msgstr "Infos"
+
+msgid "Find in this list"
+msgstr "Rechercher dans la liste"
+
+msgid "Up one level"
+msgstr "Dossier parent"
+
+msgid "Address"
+msgstr "Adresse"
+
+msgid "Drives"
+msgstr "Lecteurs"
+
+msgid "Type"
+msgstr "Type"
+
+msgid "Modified"
+msgstr "Modifié"
+
+msgid "Folder"
+msgstr "Dossier"
+
+msgid "Link"
+msgstr "Lien"
+
+msgid "link"
+msgstr "lien"
+
+msgid "GB"
+msgstr "Go"
+
+msgid "Or drag an archive onto this window. Supported formats: ZIP, 7z, tar, tar.gz, tar.xz, RAR, and split archives."
+msgstr "Ou faites glisser une archive sur cette fenêtre. Formats pris en charge : ZIP, 7z, tar, tar.gz, tar.xz, RAR et archives fractionnées."
+
+msgid "Or drag an archive onto this window. Supported formats: ZIP, 7z, tar, tar.gz, tar.xz, and split archives."
+msgstr "Ou faites glisser une archive sur cette fenêtre. Formats pris en charge : ZIP, 7z, tar, tar.gz, tar.xz et archives fractionnées."
+
+msgid "Show in the file manager's context menu"
+msgstr "Afficher dans le menu contextuel du gestionnaire de fichiers"
+
+msgid "Show in the Finder context menu"
+msgstr "Afficher dans le menu contextuel du Finder"
+
+msgid "Select destination folder"
+msgstr "Choisir le dossier de destination"
+
+msgid "No entries remaining"
+msgstr "Aucune entrée restante"
+
+msgid "{}. Turn off \"Remove the archive during extraction\" to extract it and keep the archive"
+msgstr "{}. Désactivez « Supprimer l'archive pendant l'extraction » pour l'extraire en gardant l'archive"
+
+msgid "Checking disk space…"
+msgstr "Vérification de l'espace disque…"
+
+msgid "Converting it back to a standard archive. Extracted files are kept."
+msgstr "Reconversion en archive standard. Les fichiers extraits sont conservés."
+
+msgid "Verifying every entry. No files are written."
+msgstr "Vérification de chaque entrée. Aucun fichier n'est écrit."
+
+msgid "Pausing after the current batch…"
+msgstr "Pause après le lot en cours…"
+
+msgid "Verifying archive before extracting…"
+msgstr "Vérification de l'archive avant extraction…"
+
+msgid "Progress is saved. The extraction can be resumed now or later."
+msgstr "La progression est enregistrée. L'extraction peut reprendre maintenant ou plus tard."
+
+msgid "All entries were extracted. The archive was kept."
+msgstr "Toutes les entrées ont été extraites. L'archive a été conservée."
+
+msgid "All entries were extracted. The archive was removed."
+msgstr "Toutes les entrées ont été extraites. L'archive a été supprimée."
+
+msgid "Waiting for disk"
+msgstr "En attente du disque"
+
+msgid "Reading archive… {}%"
+msgstr "Lecture de l'archive… {} %"
+
+msgid "{} entry"
+msgid_plural "{} entries"
+msgstr[0] "{} entrée"
+msgstr[1] "{} entrées"
+
+msgid "{} in {} remaining"
+msgstr "{} dans {} restantes"
+
+msgid "{} uncompressed"
+msgstr "{} décompressés"
+
+msgid "Restore complete"
+msgstr "Restauration terminée"
+
+msgid "Restore failed"
+msgstr "Échec de la restauration"
+
+msgid "Restoring {}"
+msgstr "Restauration de {}"
+
+msgid "Test complete"
+msgstr "Test terminé"
+
+msgid "Test failed"
+msgstr "Échec du test"
+
+msgid "Extraction complete"
+msgstr "Extraction terminée"
+
+msgid "Extraction paused"
+msgstr "Extraction en pause"
+
+msgid "Extraction failed"
+msgstr "Échec de l'extraction"
+
+msgid "Insufficient disk space"
+msgstr "Espace disque insuffisant"
+
+msgid "Extracting {}"
+msgstr "Extraction de {}"
+
+msgid "Destination: {}"
+msgstr "Destination : {}"
+
+msgid "Archive remaining: {}"
+msgstr "Reste de l'archive : {}"
+
+msgid "Test passed: 1 entry verified."
+msgid_plural "Test passed: {} entries verified."
+msgstr[0] "Test réussi : 1 entrée vérifiée."
+msgstr[1] "Test réussi : {} entrées vérifiées."
+
+msgid "{}/s, {} remaining"
+msgstr "{}/s, {} restant"
+
+msgid "less than 5 seconds"
+msgstr "moins de 5 secondes"
+
+msgid "{} second"
+msgid_plural "{} seconds"
+msgstr[0] "{} seconde"
+msgstr[1] "{} secondes"
+
+msgid "{} minute"
+msgid_plural "{} minutes"
+msgstr[0] "{} minute"
+msgstr[1] "{} minutes"
+
+msgid "{} hour"
+msgid_plural "{} hours"
+msgstr[0] "{} heure"
+msgstr[1] "{} heures"
+
+msgid "the 1 entry"
+msgid_plural "the {} entries"
+msgstr[0] "la seule entrée"
+msgstr[1] "les {} entrées"
+
+msgid "Extraction progress discarded. The archive was not modified. Extracted files remain in {}."
+msgstr "Progression de l'extraction abandonnée. L'archive n'a pas été modifiée. Les fichiers extraits restent dans {}."
+
+msgid "Archive restored. It contains {} not yet extracted. Extracted files remain in {}."
+msgstr "Archive restaurée. Elle contient {} pas encore extraites. Les fichiers extraits restent dans {}."
+
+msgid "1 replaced file remains in {1}, since the file extracted at its path is no longer in the archive."
+msgid_plural "{} replaced files remain in {}, since the files extracted at their paths are no longer in the archive."
+msgstr[0] "1 fichier remplacé reste dans {1}, car le fichier extrait à sa place n'est plus dans l'archive."
+msgstr[1] "{} fichiers remplacés restent dans {}, car les fichiers extraits à leur place ne sont plus dans l'archive."
+
+msgid "{} Progress is saved; the extraction can be resumed."
+msgstr "{} La progression est enregistrée ; l'extraction peut reprendre."
+
+msgid "'{}' already exists in {}."
+msgstr "« {} » existe déjà dans {}."
+
+msgid "Replace deletes the existing file when the extraction completes. Skip keeps it, and the archive's copy is not kept. Keep both keeps it and adds the archive's copy with a number after its name."
+msgstr "Remplacer supprime le fichier existant à la fin de l'extraction. Ignorer le conserve, et la copie de l'archive n'est pas gardée. Conserver les deux le garde et ajoute la copie de l'archive avec un numéro après son nom."
+
+msgid "Replace deletes the existing file when the extraction completes. Skip keeps it. Keep both keeps it and adds the archive's copy with a number after its name."
+msgstr "Remplacer supprime le fichier existant à la fin de l'extraction. Ignorer le conserve. Conserver les deux le garde et ajoute la copie de l'archive avec un numéro après son nom."
+
+msgid "Do the same for the next file"
+msgid_plural "Do the same for the next {} files"
+msgstr[0] "Faire de même pour le fichier suivant"
+msgstr[1] "Faire de même pour les {} fichiers suivants"
+
+msgid "Open…"
+msgstr "Ouvrir…"
+
+msgid "Settings"
+msgstr "Paramètres"
+
+msgid "Verify archive before extracting"
+msgstr "Vérifier l'archive avant l'extraction"
+
+msgid "Remove the archive during extraction"
+msgstr "Supprimer l'archive pendant l'extraction"
+
+msgid "Close the progress window when extraction completes"
+msgstr "Fermer la fenêtre de progression à la fin de l'extraction"
+
+msgid "Check for updates"
+msgstr "Rechercher des mises à jour"
+
+msgid "Drop the archive to open it"
+msgstr "Déposez l'archive pour l'ouvrir"
+
+msgid "No archive open"
+msgstr "Aucune archive ouverte"
+
+msgid "The archive is removed progressively during extraction, so only the space for the extracted files is required."
+msgstr "L'archive est supprimée au fur et à mesure de l'extraction : seul l'espace des fichiers extraits est nécessaire."
+
+msgid "Unable to open {}"
+msgstr "Impossible d'ouvrir {}"
+
+msgid "Open another archive…"
+msgstr "Ouvrir une autre archive…"
+
+msgid "All entries have been extracted."
+msgstr "Toutes les entrées ont été extraites."
+
+msgid "This archive is empty."
+msgstr "Cette archive est vide."
+
+msgid "This archive is partially extracted to {}."
+msgstr "Cette archive est partiellement extraite dans {}."
+
+msgid " The archive is kept."
+msgstr " L'archive est conservée."
+
+msgid "All entries have been extracted to {}. Select Finish to remove the remaining temporary files."
+msgstr "Toutes les entrées ont été extraites dans {}. Choisissez Terminer pour supprimer les fichiers temporaires restants."
+
+msgid "Extract to"
+msgstr "Extraire vers"
+
+msgid "Recent destination folders"
+msgstr "Dossiers de destination récents"
+
+msgid "Reserved space"
+msgstr "Espace réservé"
+
+msgid "GB. Enter a number, such as 2 or 0.5."
+msgstr "Go. Entrez un nombre, par exemple 2 ou 0.5."
+
+msgid "The archive is removed progressively during extraction. An interrupted extraction can be resumed."
+msgstr "L'archive est supprimée au fur et à mesure de l'extraction. Une extraction interrompue peut reprendre."
+
+msgid "The archive is kept unchanged, so space is required for all extracted files. An interrupted extraction can be resumed."
+msgstr "L'archive est conservée telle quelle : il faut donc de l'espace pour tous les fichiers extraits. Une extraction interrompue peut reprendre."
+
+msgid "Restore archive"
+msgstr "Restaurer l'archive"
+
+msgid "Extract"
+msgstr "Extraire"
+
+msgid "Resume extraction"
+msgstr "Reprendre l'extraction"
+
+msgid "Finish"
+msgstr "Terminer"
+
+msgid "Disk space"
+msgstr "Espace disque"
+
+msgid "Calculating…"
+msgstr "Calcul…"
+
+msgid "Available"
+msgstr "Disponible"
+
+msgid "Required, archive removed"
+msgstr "Nécessaire, archive supprimée"
+
+msgid "Required, archive kept"
+msgstr "Nécessaire, archive conservée"
+
+msgid "Reserved"
+msgstr "Réservé"
+
+msgid "Available after extraction"
+msgstr "Disponible après l'extraction"
+
+msgid "Back"
+msgstr "Retour"
+
+msgid "Pausing…"
+msgstr "Mise en pause…"
+
+msgid "Resume"
+msgstr "Reprendre"
+
+msgid "Check again"
+msgstr "Vérifier à nouveau"
+
+msgid "Retry"
+msgstr "Réessayer"
+
+msgid "Password required"
+msgstr "Mot de passe requis"
+
+msgid "Enter the password for {}."
+msgstr "Entrez le mot de passe de {}."
+
+msgid "Password"
+msgstr "Mot de passe"
+
+msgid "Incorrect password."
+msgstr "Mot de passe incorrect."
+
+msgid "OK"
+msgstr "OK"
+
+msgid "Replace or skip files"
+msgstr "Remplacer ou ignorer les fichiers"
+
+msgid "Keep both"
+msgstr "Conserver les deux"
+
+msgid "Skip"
+msgstr "Ignorer"
+
+msgid "Replace"
+msgstr "Remplacer"

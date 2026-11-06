@@ -214,7 +214,10 @@ mod tests {
         );
         assert_eq!(
             parse(&["--add-7z", "a"]).unwrap(),
-            Launch::Add(AddKind::Quick(hatchzip_core::create::Format::SevenZ), vec!["a".into()])
+            Launch::Add(
+                AddKind::Quick(hatchzip_core::create::Format::SevenZ),
+                vec!["a".into()]
+            )
         );
         assert_eq!(
             parse(&["--extract-here", "a b/game.7z.001"]).unwrap(),

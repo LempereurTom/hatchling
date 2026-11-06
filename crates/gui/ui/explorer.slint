@@ -1,0 +1,678 @@
+import { Button, LineEdit, ListView, Palette, ComboBox } from "std-widgets.slint";
+import { Theme, Line, VLine, FolderIcon, FileIcon } from "theme.slint";
+import { PasswordPrompt } from "parts.slint";
+
+export struct FileRow {
+    name: string,
+    size: string,
+    kind: string,
+    modified: string,
+    dir: bool,
+    archive: bool,
+    up: bool,
+    selected: bool,
+}
+
+// A WinRAR-style toolbar button: a big two-colour icon over its label.
+component ToolButton inherits Rectangle {
+    in property <string> label;
+    in property <string> base;
+    in property <brush> base-color;
+    in property <string> accent;
+    in property <brush> accent-color;
+    in property <bool> evenodd;
+    in property <bool> enabled: true;
+    callback clicked();
+
+    min-width: 64px;
+    height: 62px;
+    border-radius: 4px;
+    background: touch.has-hover && root.enabled ? (touch.pressed ? Theme.track : Palette.alternate-background) : transparent;
+    accessible-role: button;
+    accessible-label: root.label;
+    accessible-enabled: root.enabled;
+    accessible-action-default => { if root.enabled { root.clicked(); } }
+
+    VerticalLayout {
+        padding: 4px;
+        padding-left: 8px;
+        padding-right: 8px;
+        spacing: 3px;
+        alignment: center;
+        HorizontalLayout {
+            alignment: center;
+            Rectangle {
+                width: 30px;
+                height: 30px;
+                opacity: root.enabled ? 1 : 0.35;
+                Path {
+                    width: 30px;
+                    height: 30px;
+                    viewbox-width: 32;
+                    viewbox-height: 32;
+                    commands: root.base;
+                    fill: root.base-color;
+                    fill-rule: root.evenodd ? FillRule.evenodd : FillRule.nonzero;
+                    stroke: transparent;
+                }
+                Path {
+                    width: 30px;
+                    height: 30px;
+                    viewbox-width: 32;
+                    viewbox-height: 32;
+                    commands: root.accent;
+                    fill: root.accent-color;
+                    stroke: transparent;
+                }
+            }
+        }
+        Text {
+            text: root.label;
+            horizontal-alignment: center;
+            font-size: Theme.small-size;
+            opacity: root.enabled ? 1 : 0.45;
+        }
+    }
+    touch := TouchArea {
+        enabled: root.enabled;
+        clicked => { root.clicked(); }
+    }
+}
+
+component HeaderCell inherits Rectangle {
+    in property <string> label;
+    in property <bool> sorted;
+    in property <bool> descending;
+    in property <TextHorizontalAlignment> align: left;
+    callback clicked();
+    background: touch.has-hover ? Palette.alternate-background : transparent;
+    HorizontalLayout {
+        padding-left: 6px;
+        padding-right: 6px;
+        spacing: 4px;
+        Text {
+            text: root.label;
+            color: Theme.muted;
+            font-size: Theme.small-size;
+            vertical-alignment: center;
+            horizontal-alignment: root.align;
+            horizontal-stretch: 1;
+            overflow: elide;
+        }
+        if root.sorted: Text {
+            text: root.descending ? "v" : "^";
+            color: Theme.muted;
+            font-size: Theme.small-size;
+            vertical-alignment: center;
+        }
+    }
+    touch := TouchArea { clicked => { root.clicked(); } }
+}
+
+export component ExplorerWindow inherits Window {
+    in property <[FileRow]> rows;
+    in-out property <string> location;
+    in property <bool> in-archive;
+    in property <string> archive-title;
+    in property <string> status-left;
+    in property <string> status-right;
+    in property <int> sort-column: 0;
+    in property <bool> sort-descending;
+    in property <int> cursor: -1;
+    in property <[string]> drives;
+    in property <[string]> favorites;
+    in property <bool> can-add;
+    in property <bool> can-extract;
+    in property <bool> can-test;
+    in property <bool> can-view;
+    in property <bool> can-delete;
+    in property <bool> can-info;
+    in-out property <string> filter;
+    in property <bool> busy;
+    in property <string> busy-text;
+    in property <string> info-text;
+    in property <bool> info-shown;
+    in property <bool> confirm-shown;
+    in property <string> confirm-text;
+    in property <bool> password-shown;
+    in property <bool> password-wrong;
+    in property <string> password-name;
+    in-out property <bool> shell-menu-on;
+
+    callback navigate(string);
+    callback go-up();
+    callback refresh();
+    callback pick-drive(int);
+    callback row-pressed(int, bool, bool);
+    callback row-activated(int);
+    callback move-cursor(int, bool);
+    callback select-all();
+    callback sort-by(int);
+    callback add();
+    callback extract-to();
+    callback extract-here();
+    callback extract-each();
+    callback test();
+    callback view();
+    callback delete();
+    callback info();
+    callback info-close();
+    callback confirm-yes();
+    callback confirm-no();
+    callback open-archive();
+    callback change-folder();
+    callback add-favorite();
+    callback open-favorite(int);
+    callback remove-favorite();
+    callback shell-menu-toggled();
+    callback filter-edited(string);
+    callback password-ok(string);
+    callback password-cancel();
+    callback about();
+    callback quit();
+
+    public function show-row(i: int) {
+        let y = list.content-y + i * 24px;
+        if y < 0px { list.content-y -= y; }
+        if y + 24px > list.visible-height { list.content-y -= y + 24px - list.visible-height; }
+    }
+    public pure function column-name() -> string { return @tr("Name"); }
+    public pure function column-size() -> string { return @tr("Size"); }
+    public pure function folder-kind() -> string { return @tr("File folder"); }
+    public pure function up-kind() -> string { return @tr("Parent folder"); }
+    public pure function drive-kind() -> string { return @tr("Local disk"); }
+    public pure function file-kind(ext: string) -> string { return @tr("{} file", ext); }
+    public pure function archive-kind(ext: string) -> string { return @tr("{} archive", ext); }
+    public pure function plain-file() -> string { return @tr("File"); }
+    public pure function this-pc() -> string { return @tr("This PC"); }
+    public pure function totals(dirs: string, size: string, files: string) -> string { return @tr("Total {} folders and {} in {} files", dirs, size, files); }
+    public pure function selected-text(size: string, files: string) -> string { return @tr("Selected {} in {} files", size, files); }
+    public pure function opening(name: string) -> string { return @tr("Opening {}…", name); }
+    public pure function confirm-delete(n: string) -> string { return @tr("Move {} selected items to the Recycle Bin?", n); }
+    public pure function select-first() -> string { return @tr("Select one or more files or folders first."); }
+    public pure function select-archive() -> string { return @tr("Select one or more archives first."); }
+    public pure function view-unsupported() -> string { return @tr("Select a file to view it."); }
+    public pure function info-archive(name: string, format: string, files: string, dirs: string, size: string, packed: string, ratio: string, encrypted: string) -> string { return @tr("Archive: {}\nFormat: {}\nFiles: {}\nFolders: {}\nTotal size: {}\nPacked size: {}\nRatio: {}%\nEncrypted: {}", name, format, files, dirs, size, packed, ratio, encrypted); }
+    public pure function info-items(n: string, size: string, files: string, dirs: string) -> string { return @tr("{} selected items\nFiles: {}\nFolders: {}\nTotal size: {}", n, files, dirs, size); }
+    public pure function yes-text() -> string { return @tr("Yes"); }
+    public pure function no-text() -> string { return @tr("No"); }
+    public pure function change-folder-title() -> string { return @tr("Change folder"); }
+    public pure function open-archive-title() -> string { return @tr("Open archive"); }
+    public pure function archives-filter() -> string { return @tr("Archives"); }
+    public pure function all-files-filter() -> string { return @tr("All files"); }
+    public pure function menu-added() -> string { return @tr("Context menu entries added."); }
+    public pure function menu-removed() -> string { return @tr("Context menu entries removed."); }
+
+    title: root.in-archive ? root.archive-title + " - HatchZip" : (root.location == "" ? "HatchZip" : root.location + " - HatchZip");
+    preferred-width: 1000px;
+    preferred-height: 680px;
+    min-width: 640px;
+    min-height: 420px;
+    background: Palette.background;
+
+    MenuBar {
+        Menu {
+            title: @tr("File");
+            MenuItem {
+                title: @tr("Open archive…");
+                shortcut: @keys(Control + O);
+                activated => { root.open-archive(); }
+            }
+            MenuItem {
+                title: @tr("Change folder…");
+                shortcut: @keys(Control + D);
+                activated => { root.change-folder(); }
+            }
+            MenuItem {
+                title: @tr("Select all");
+                shortcut: @keys(Control + A);
+                activated => { root.select-all(); }
+            }
+            MenuSeparator { }
+            MenuItem {
+                title: @tr("Quit");
+                shortcut: @keys(Control + Q);
+                activated => { root.quit(); }
+            }
+        }
+        Menu {
+            title: @tr("Commands");
+            MenuItem {
+                title: @tr("Add files to archive");
+                shortcut: @keys(Alt + A);
+                enabled: root.can-add;
+                activated => { root.add(); }
+            }
+            MenuItem {
+                title: @tr("Extract to the specified folder");
+                shortcut: @keys(Alt + E);
+                enabled: root.can-extract;
+                activated => { root.extract-to(); }
+            }
+            MenuItem {
+                title: @tr("Extract without confirmation");
+                shortcut: @keys(Alt + W);
+                enabled: root.can-extract;
+                activated => { root.extract-here(); }
+            }
+            MenuItem {
+                title: @tr("Extract each archive to its own folder");
+                enabled: root.can-extract && !root.in-archive;
+                activated => { root.extract-each(); }
+            }
+            MenuItem {
+                title: @tr("Test archived files");
+                shortcut: @keys(Alt + T);
+                enabled: root.can-test;
+                activated => { root.test(); }
+            }
+            MenuItem {
+                title: @tr("View file");
+                shortcut: @keys(Alt + V);
+                enabled: root.can-view;
+                activated => { root.view(); }
+            }
+            MenuItem {
+                title: @tr("Delete files");
+                enabled: root.can-delete;
+                activated => { root.delete(); }
+            }
+            MenuItem {
+                title: @tr("Show information");
+                shortcut: @keys(Alt + I);
+                enabled: root.can-info;
+                activated => { root.info(); }
+            }
+        }
+        Menu {
+            title: @tr("Favorites");
+            MenuItem {
+                title: @tr("Add to favorites…");
+                shortcut: @keys(Control + F);
+                enabled: !root.in-archive && root.location != "";
+                activated => { root.add-favorite(); }
+            }
+            MenuItem {
+                title: @tr("Remove this folder from favorites");
+                enabled: !root.in-archive && root.location != "";
+                activated => { root.remove-favorite(); }
+            }
+            MenuSeparator { }
+            for fav[i] in root.favorites: MenuItem {
+                title: fav;
+                activated => { root.open-favorite(i); }
+            }
+        }
+        Menu {
+            title: @tr("Options");
+            MenuItem {
+                title: @tr("Show in the Explorer context menu");
+                checkable: true;
+                checked <=> root.shell-menu-on;
+                activated => { root.shell-menu-toggled(); }
+            }
+            MenuItem {
+                title: @tr("Refresh");
+                shortcut: @keys(F5);
+                activated => { root.refresh(); }
+            }
+        }
+        Menu {
+            title: @tr("Help");
+            MenuItem {
+                title: @tr("About HatchZip");
+                activated => { root.about(); }
+            }
+        }
+    }
+
+    VerticalLayout {
+        // Toolbar.
+        Rectangle {
+            background: Theme.panel;
+            HorizontalLayout {
+                padding: 4px;
+                spacing: 2px;
+                alignment: start;
+                ToolButton {
+                    label: @tr("Add");
+                    enabled: root.can-add;
+                    base: "M 3 13 L 25 13 L 25 30 L 3 30 Z M 2 9 L 26 9 L 26 13 L 2 13 Z";
+                    base-color: #c98a3a;
+                    accent: "M 21 1 L 25 1 L 25 6 L 30 6 L 30 10 L 25 10 L 25 15 L 21 15 L 21 10 L 16 10 L 16 6 L 21 6 Z";
+                    accent-color: #2e9e44;
+                    clicked => { root.add(); }
+                }
+                ToolButton {
+                    label: @tr("Extract To");
+                    enabled: root.can-extract;
+                    base: "M 3 13 L 25 13 L 25 30 L 3 30 Z M 2 9 L 26 9 L 26 13 L 2 13 Z";
+                    base-color: #c98a3a;
+                    accent: "M 23 0 L 31 8 L 26 8 L 26 16 L 20 16 L 20 8 L 15 8 Z";
+                    accent-color: #2f7bd6;
+                    clicked => { root.extract-to(); }
+                }
+                ToolButton {
+                    label: @tr("Test");
+                    enabled: root.can-test;
+                    base: "M 16 2 A 14 14 0 1 1 15.99 2 Z";
+                    base-color: #2e9e44;
+                    accent: "M 8 16 L 11 13 L 14.5 16.5 L 22 9 L 25 12 L 14.5 22.5 Z";
+                    accent-color: #ffffff;
+                    clicked => { root.test(); }
+                }
+                ToolButton {
+                    label: @tr("View");
+                    enabled: root.can-view;
+                    base: "M 1 16 Q 16 1 31 16 Q 16 31 1 16 Z";
+                    base-color: #6f9fd8;
+                    accent: "M 16 10 A 6 6 0 1 1 15.99 10 Z";
+                    accent-color: #1d3e6b;
+                    clicked => { root.view(); }
+                }
+                ToolButton {
+                    label: @tr("Delete");
+                    enabled: root.can-delete;
+                    base: "M 7 10 L 25 10 L 23 30 L 9 30 Z";
+                    base-color: #d9534f;
+                    accent: "M 4 5 L 28 5 L 28 8 L 4 8 Z M 13 2 L 19 2 L 19 5 L 13 5 Z";
+                    accent-color: #a83a37;
+                    clicked => { root.delete(); }
+                }
+                ToolButton {
+                    label: @tr("Info");
+                    enabled: root.can-info;
+                    base: "M 16 2 A 14 14 0 1 1 15.99 2 Z";
+                    base-color: #2f7bd6;
+                    accent: "M 14 13 L 18 13 L 18 25 L 14 25 Z M 14 7 L 18 7 L 18 11 L 14 11 Z";
+                    accent-color: #ffffff;
+                    clicked => { root.info(); }
+                }
+                Rectangle { horizontal-stretch: 1; }
+                // Find: filters the current list by name.
+                VerticalLayout {
+                    alignment: center;
+                    padding-right: 6px;
+                    LineEdit {
+                        width: 200px;
+                        placeholder-text: @tr("Find in this list");
+                        accessible-label: @tr("Find in this list");
+                        text <=> root.filter;
+                        edited(t) => { root.filter-edited(t); }
+                    }
+                }
+            }
+        }
+        Line { }
+        // Address bar.
+        HorizontalLayout {
+            padding: 4px;
+            spacing: 4px;
+            Button {
+                text: "^";
+                accessible-label: @tr("Up one level");
+                enabled: root.location != "";
+                clicked => { root.go-up(); }
+            }
+            address := LineEdit {
+                text <=> root.location;
+                accessible-label: @tr("Address");
+                horizontal-stretch: 1;
+                accepted(t) => { root.navigate(t); }
+            }
+            ComboBox {
+                width: 120px;
+                model: root.drives;
+                current-index: -1;
+                accessible-label: @tr("Drives");
+                selected => { root.pick-drive(self.current-index); }
+            }
+        }
+        Line { }
+        // Column headers.
+        Rectangle {
+            height: 26px;
+            background: Theme.panel;
+            HorizontalLayout {
+                padding-left: 6px;
+                padding-right: 14px;
+                HeaderCell {
+                    label: root.column-name();
+                    sorted: root.sort-column == 0;
+                    descending: root.sort-descending;
+                    horizontal-stretch: 1;
+                    clicked => { root.sort-by(0); }
+                }
+                VLine { }
+                HeaderCell {
+                    label: root.column-size();
+                    sorted: root.sort-column == 1;
+                    descending: root.sort-descending;
+                    align: right;
+                    width: 110px;
+                    clicked => { root.sort-by(1); }
+                }
+                VLine { }
+                HeaderCell {
+                    label: @tr("Type");
+                    sorted: root.sort-column == 2;
+                    descending: root.sort-descending;
+                    width: 170px;
+                    clicked => { root.sort-by(2); }
+                }
+                VLine { }
+                HeaderCell {
+                    label: @tr("Modified");
+                    sorted: root.sort-column == 3;
+                    descending: root.sort-descending;
+                    width: 140px;
+                    clicked => { root.sort-by(3); }
+                }
+            }
+        }
+        Line { }
+        // The list.
+        ContextMenuArea {
+            vertical-stretch: 1;
+            Menu {
+                MenuItem {
+                    title: @tr("Add files to archive");
+                    enabled: root.can-add;
+                    activated => { root.add(); }
+                }
+                MenuItem {
+                    title: @tr("Extract to the specified folder");
+                    enabled: root.can-extract;
+                    activated => { root.extract-to(); }
+                }
+                MenuItem {
+                    title: @tr("Extract without confirmation");
+                    enabled: root.can-extract;
+                    activated => { root.extract-here(); }
+                }
+                MenuItem {
+                    title: @tr("Test archived files");
+                    enabled: root.can-test;
+                    activated => { root.test(); }
+                }
+                MenuItem {
+                    title: @tr("View file");
+                    enabled: root.can-view;
+                    activated => { root.view(); }
+                }
+                MenuSeparator { }
+                MenuItem {
+                    title: @tr("Delete files");
+                    enabled: root.can-delete;
+                    activated => { root.delete(); }
+                }
+                MenuItem {
+                    title: @tr("Show information");
+                    enabled: root.can-info;
+                    activated => { root.info(); }
+                }
+            }
+            list := ListView {
+                for row[index] in root.rows: Rectangle {
+                    height: 24px;
+                    accessible-role: list-item;
+                    accessible-label: row.name;
+                    accessible-item-selectable: true;
+                    accessible-item-selected: row.selected;
+                    accessible-action-default => { root.row-activated(index); }
+                    background: row.selected ? (keys.has-focus ? Palette.selection-background : Palette.alternate-background) : (touch.has-hover ? Theme.panel : transparent);
+                    border-width: root.cursor == index && keys.has-focus ? 1px : 0px;
+                    border-color: Palette.accent-background;
+                    HorizontalLayout {
+                        padding-left: 10px;
+                        padding-right: 14px;
+                        spacing: 0px;
+                        HorizontalLayout {
+                            horizontal-stretch: 1;
+                            spacing: 6px;
+                            if row.dir || row.up: FolderIcon {
+                                y: (parent.height - self.height) / 2;
+                            }
+                            if row.archive: Path {
+                                y: (parent.height - self.height) / 2;
+                                width: 16px;
+                                height: 16px;
+                                viewbox-width: 16;
+                                viewbox-height: 16;
+                                commands: "M 2 5 L 14 5 L 14 15 L 2 15 Z M 1 3 L 15 3 L 15 5 L 1 5 Z M 7 5 L 9 5 L 9 7 L 7 7 Z M 7 8 L 9 8 L 9 10 L 7 10 Z";
+                                fill: #c98a3a;
+                                stroke: transparent;
+                            }
+                            if !row.dir && !row.up && !row.archive: FileIcon {
+                                y: (parent.height - self.height) / 2;
+                            }
+                            Text {
+                                text: row.name;
+                                overflow: elide;
+                                vertical-alignment: center;
+                                horizontal-stretch: 1;
+                                color: row.selected && keys.has-focus ? Palette.selection-foreground : Palette.foreground;
+                            }
+                        }
+                        Text {
+                            width: 110px;
+                            text: row.size;
+                            horizontal-alignment: right;
+                            vertical-alignment: center;
+                            color: row.selected && keys.has-focus ? Palette.selection-foreground : Theme.muted;
+                        }
+                        Text {
+                            width: 170px;
+                            text: "   " + row.kind;
+                            overflow: elide;
+                            vertical-alignment: center;
+                            color: row.selected && keys.has-focus ? Palette.selection-foreground : Theme.muted;
+                        }
+                        Text {
+                            width: 140px;
+                            text: "   " + row.modified;
+                            overflow: elide;
+                            vertical-alignment: center;
+                            color: row.selected && keys.has-focus ? Palette.selection-foreground : Theme.muted;
+                        }
+                    }
+                    touch := TouchArea {
+                        pointer-event(e) => {
+                            if e.kind == PointerEventKind.down && (e.button == PointerEventButton.left || (e.button == PointerEventButton.right && !row.selected)) {
+                                keys.focus();
+                                root.row-pressed(index, e.modifiers.control, e.modifiers.shift);
+                            }
+                        }
+                        double-clicked => { root.row-activated(index); }
+                    }
+                }
+            }
+        }
+        keys := FocusScope {
+            height: 0px;
+            init => { self.focus(); }
+            key-pressed(event) => {
+                if event.text == Key.UpArrow { root.move-cursor(-1, event.modifiers.shift); return accept; }
+                if event.text == Key.DownArrow { root.move-cursor(1, event.modifiers.shift); return accept; }
+                if event.text == Key.PageUp { root.move-cursor(-20, event.modifiers.shift); return accept; }
+                if event.text == Key.PageDown { root.move-cursor(20, event.modifiers.shift); return accept; }
+                if event.text == Key.Home { root.move-cursor(-1000000, event.modifiers.shift); return accept; }
+                if event.text == Key.End { root.move-cursor(1000000, event.modifiers.shift); return accept; }
+                if event.text == Key.Return { root.row-activated(root.cursor); return accept; }
+                if event.text == Key.Backspace { root.go-up(); return accept; }
+                if event.text == Key.Delete && root.can-delete { root.delete(); return accept; }
+                return reject;
+            }
+        }
+        Line { }
+        // Status bar.
+        Rectangle {
+            height: 24px;
+            background: Theme.panel;
+            HorizontalLayout {
+                padding-left: 8px;
+                padding-right: 8px;
+                Text {
+                    text: root.busy ? root.busy-text : root.status-left;
+                    font-size: Theme.small-size;
+                    color: Theme.muted;
+                    vertical-alignment: center;
+                    horizontal-stretch: 1;
+                    overflow: elide;
+                }
+                Text {
+                    text: root.status-right;
+                    font-size: Theme.small-size;
+                    color: Theme.muted;
+                    vertical-alignment: center;
+                }
+            }
+        }
+    }
+
+    if root.info-shown || root.confirm-shown: Rectangle {
+        background: Theme.scrim;
+        TouchArea { }
+        Rectangle {
+            width: min(root.width - 40px, 460px);
+            height: card.preferred-height;
+            background: Palette.background;
+            border-radius: 8px;
+            border-width: 1px;
+            border-color: Theme.line;
+            card := VerticalLayout {
+                padding: 18px;
+                spacing: 14px;
+                Text {
+                    text: root.confirm-shown ? root.confirm-text : root.info-text;
+                    wrap: word-wrap;
+                }
+                HorizontalLayout {
+                    alignment: end;
+                    spacing: 8px;
+                    if root.confirm-shown: Button {
+                        text: root.yes-text();
+                        primary: true;
+                        clicked => { root.confirm-yes(); }
+                    }
+                    if root.confirm-shown: Button {
+                        text: root.no-text();
+                        clicked => { root.confirm-no(); }
+                    }
+                    if !root.confirm-shown: Button {
+                        text: "OK";
+                        primary: true;
+                        clicked => { root.info-close(); }
+                    }
+                }
+            }
+        }
+    }
+
+    if root.password-shown: PasswordPrompt {
+        name: root.password-name;
+        wrong: root.password-wrong;
+        ok(text) => { root.password-ok(text); }
+        cancel => { root.password-cancel(); }
+    }
+}

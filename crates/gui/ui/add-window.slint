@@ -53,7 +53,22 @@ export component AddWindow inherits Window {
     callback format-changed();
     callback pick-history(int);
 
-    public function methods() -> [string] { return [@tr("Store"), @tr("Fastest"), @tr("Fast"), @tr("Normal"), @tr("Good"), @tr("Best")]; }
+    public pure function creating(name: string) -> string { return @tr("Creating {}", name); }
+    public pure function testing(name: string) -> string { return @tr("Testing {}", name); }
+    public pure function deleting() -> string { return @tr("Deleting the archived files…"); }
+    public pure function scanning() -> string { return @tr("Listing files…"); }
+    public pure function amounts-of(done: string, total: string) -> string { return @tr("{} of {}", done, total); }
+    public pure function rate-of(speed: string, elapsed: string, left: string) -> string { return @tr("{}/s, {} elapsed, {} left", speed, elapsed, left); }
+    public pure function finished(files: string, size: string, packed: string, percent: string) -> string { return @tr("{} files, {} compressed to {} ({}%).", files, size, packed, percent); }
+    public pure function archive-n(i: string, n: string) -> string { return @tr("Archive {} of {}", i, n); }
+    public pure function password-set() -> string { return @tr("Password set: the archive will be encrypted with AES-256."); }
+    public pure function no-password() -> string { return @tr("No password"); }
+    public pure function passwords-differ() -> string { return @tr("The passwords do not match."); }
+    public pure function bad-volume() -> string { return @tr("Enter a volume size such as 700 MB or 4 GB."); }
+    public pure function cancelled-text() -> string { return @tr("Cancelled. The partial archive was removed and the files were not touched."); }
+    public pure function save-title() -> string { return @tr("Archive name"); }
+    public pure function defaults-saved() -> string { return @tr("Saved as the default settings."); }
+    public pure function methods() -> [string] { return [@tr("Store"), @tr("Fastest"), @tr("Fast"), @tr("Normal"), @tr("Good"), @tr("Best")]; }
 
     title: root.screen == AddScreen.settings ? @tr("Archive name and parameters") : root.heading;
     preferred-width: 600px;

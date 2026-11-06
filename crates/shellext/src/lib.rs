@@ -32,7 +32,9 @@ use windows::Win32::UI::Shell::{
     IEnumExplorerCommand, IEnumExplorerCommand_Impl, IExplorerCommand, IExplorerCommand_Impl,
     IShellItemArray, SHStrDupW, SIGDN_FILESYSPATH,
 };
-use windows::core::{BOOL, GUID, HRESULT, IUnknown, Interface, PCWSTR, PWSTR, Ref, Result, implement};
+use windows::core::{
+    BOOL, GUID, HRESULT, IUnknown, Interface, PCWSTR, PWSTR, Ref, Result, implement,
+};
 
 /// Must match `packaging/windows/sparse/AppxManifest.xml`.
 pub const CLSID_ROOT: GUID = GUID::from_u128(0x19c27050_9226_4571_893a_ca15dbd956e8);
@@ -95,8 +97,12 @@ fn paths(items: Ref<IShellItemArray>) -> Vec<PathBuf> {
             return out;
         };
         for i in 0..count {
-            let Ok(item) = items.GetItemAt(i) else { continue };
-            let Ok(name) = item.GetDisplayName(SIGDN_FILESYSPATH) else { continue };
+            let Ok(item) = items.GetItemAt(i) else {
+                continue;
+            };
+            let Ok(name) = item.GetDisplayName(SIGDN_FILESYSPATH) else {
+                continue;
+            };
             let s = name.to_string().ok();
             CoTaskMemFree(Some(name.0 as *const c_void));
             if let Some(s) = s {
@@ -133,7 +139,13 @@ fn folder_stem(archive: &Path) -> String {
         .unwrap_or_default();
     let lower = name.to_ascii_lowercase();
     for suffix in [
-        ".tar.gz", ".tar.xz", ".7z.001", ".zip.001", ".part1.rar", ".part01.rar", ".part001.rar",
+        ".tar.gz",
+        ".tar.xz",
+        ".7z.001",
+        ".zip.001",
+        ".part1.rar",
+        ".part01.rar",
+        ".part001.rar",
     ] {
         if lower.ends_with(suffix) {
             return name[..name.len() - suffix.len()].to_string();
@@ -150,7 +162,11 @@ fn quote(arg: &OsStr) -> Vec<u16> {
     // spaces and a trailing backslash, which would escape the closing quote.
     let mut out: Vec<u16> = vec![b'"' as u16];
     let wide: Vec<u16> = arg.encode_wide().collect();
-    let trailing = wide.iter().rev().take_while(|c| **c == b'\\' as u16).count();
+    let trailing = wide
+        .iter()
+        .rev()
+        .take_while(|c| **c == b'\\' as u16)
+        .count();
     out.extend(&wide);
     out.extend(std::iter::repeat_n(b'\\' as u16, trailing));
     out.push(b'"' as u16);
@@ -180,10 +196,7 @@ fn launch(flags: &[&str], paths: &[PathBuf]) -> Result<()> {
             std::process::id(),
             OBJECTS.load(Ordering::Relaxed)
         ));
-        let text: String = paths
-            .iter()
-            .map(|p| format!("{}\n", p.display()))
-            .collect();
+        let text: String = paths.iter().map(|p| format!("{}\n", p.display())).collect();
         std::fs::write(&list, text).map_err(|_| windows::core::Error::from(E_FAIL))?;
         let mut arg = OsString::from("@");
         arg.push(&list);
@@ -202,7 +215,13 @@ fn launch(flags: &[&str], paths: &[PathBuf]) -> Result<()> {
         .unwrap_or_else(|| vec![0]);
     unsafe {
         CreateProcessW(
-            PCWSTR(exe.as_os_str().encode_wide().chain([0]).collect::<Vec<_>>().as_ptr()),
+            PCWSTR(
+                exe.as_os_str()
+                    .encode_wide()
+                    .chain([0])
+                    .collect::<Vec<_>>()
+                    .as_ptr(),
+            ),
             Some(PWSTR(cmd.as_mut_ptr())),
             None,
             None,
@@ -391,7 +410,9 @@ impl IExplorerCommand_Impl for Sub_Impl {
         Err(E_NOTIMPL.into())
     }
     fn GetCanonicalName(&self) -> Result<GUID> {
-        Ok(GUID::from_u128(0x3a7a4c7f_64c3_4e4c_b756_a3f8d116de00 + self.0 as u128))
+        Ok(GUID::from_u128(
+            0x3a7a4c7f_64c3_4e4c_b756_a3f8d116de00 + self.0 as u128,
+        ))
     }
     fn GetState(&self, items: Ref<IShellItemArray>, _: BOOL) -> Result<u32> {
         Ok(if self.0.visible(&paths(items)) {
@@ -450,7 +471,8 @@ impl IEnumExplorerCommand_Impl for Enum_Impl {
         if n as u32 == celt { S_OK } else { S_FALSE }
     }
     fn Skip(&self, celt: u32) -> Result<()> {
-        self.next.set((self.next.get() + celt as usize).min(ITEMS.len()));
+        self.next
+            .set((self.next.get() + celt as usize).min(ITEMS.len()));
         Ok(())
     }
     fn Reset(&self) -> Result<()> {
@@ -518,9 +540,15 @@ mod tests {
 
     #[test]
     fn names_follow_winrar() {
-        assert_eq!(archive_stem(&[PathBuf::from(r"C:\x\Game.v1.iso")]), "Game.v1");
         assert_eq!(
-            archive_stem(&[PathBuf::from(r"C:\x\Saves\a.txt"), PathBuf::from(r"C:\x\Saves\b.txt")]),
+            archive_stem(&[PathBuf::from(r"C:\x\Game.v1.iso")]),
+            "Game.v1"
+        );
+        assert_eq!(
+            archive_stem(&[
+                PathBuf::from(r"C:\x\Saves\a.txt"),
+                PathBuf::from(r"C:\x\Saves\b.txt")
+            ]),
             "Saves"
         );
         assert_eq!(folder_stem(Path::new(r"C:\x\Game.7z.001")), "Game");

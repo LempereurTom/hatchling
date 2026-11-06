@@ -338,6 +338,7 @@ pub fn build(
     APP.with(|a| *a.borrow_mut() = Some(app.clone()));
 
     wire(&ui, &app);
+    app.show_output_history();
     crate::password::host_in!(ui);
     crate::replace::host_in!(ui);
     if platform::SHELL_MENU {
@@ -399,6 +400,13 @@ fn wire(ui: &MainWindow, app: &Rc<App>) {
     ui.on_open_archive(move || a.pick_archive());
     let a = app.clone();
     ui.on_change_output(move || a.pick_output());
+    let a = app.clone();
+    ui.on_pick_output_history(move |i| {
+        let dir = a.settings.borrow().extract_history.get(i as usize).cloned();
+        if let Some(d) = dir {
+            a.set_output(d);
+        }
+    });
     let a = app.clone();
     ui.on_keep_free_edited(move |text| a.keep_free_edited(&text));
     let a = app.clone();
@@ -734,6 +742,18 @@ impl App {
         });
     }
 
+    fn show_output_history(&self) {
+        let list: Vec<slint::SharedString> = self
+            .settings
+            .borrow()
+            .extract_history
+            .iter()
+            .map(|p| p.display().to_string().into())
+            .collect();
+        self.ui()
+            .set_output_history(ModelRc::new(slint::VecModel::from(list)));
+    }
+
     fn set_output(&self, dir: PathBuf) {
         self.ui().set_output(dir.display().to_string().into());
         *self.output.borrow_mut() = dir;
@@ -747,6 +767,10 @@ impl App {
         let ui = self.ui();
         let output = self.output.borrow().clone();
         let keep = self.keeps_archive();
+        if self.mode.get() == Mode::Fresh {
+            self.change_settings(|s| settings::remember(&mut s.extract_history, &output));
+            self.show_output_history();
+        }
         let request = Request::Extract {
             archive,
             // A resume must go where it started; the journal knows where.

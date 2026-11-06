@@ -233,13 +233,18 @@ fn run(command: Command) -> Result<u8> {
             &sources,
             hatchzip_core::create::Options {
                 format: match archive.extension().and_then(|e| e.to_str()) {
-                    Some(e) if e.eq_ignore_ascii_case("7z") => hatchzip_core::create::Format::SevenZ,
+                    Some(e) if e.eq_ignore_ascii_case("7z") => {
+                        hatchzip_core::create::Format::SevenZ
+                    }
                     Some(e) if e.eq_ignore_ascii_case("zip") => hatchzip_core::create::Format::Zip,
                     _ => anyhow::bail!("Name the archive .zip or .7z to choose its format."),
                 },
                 level,
                 password: match password_env {
-                    Some(var) => Some(std::env::var(&var).with_context(|| format!("reading the password from ${var}"))?),
+                    Some(var) => Some(
+                        std::env::var(&var)
+                            .with_context(|| format!("reading the password from ${var}"))?,
+                    ),
                     None => None,
                 },
                 encrypt_names,
@@ -953,7 +958,11 @@ fn progress_bar(total: u64, prefix: &'static str) -> ProgressBar {
     bar
 }
 
-fn create(archive: &Path, sources: &[PathBuf], options: hatchzip_core::create::Options) -> Result<u8> {
+fn create(
+    archive: &Path,
+    sources: &[PathBuf],
+    options: hatchzip_core::create::Options,
+) -> Result<u8> {
     let progress = hatchzip_core::create::Progress::default();
     let report = hatchzip_core::create::create(sources, archive, &options, &progress)?;
     for v in &report.volumes {

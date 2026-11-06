@@ -18,3 +18,13 @@ pub fn config_dir() -> Option<PathBuf> {
 /// File managers pass the files as arguments here, so there is nothing to
 /// listen for.
 pub fn forward_opened_files(_on_open: impl Fn(PathBuf) + 'static) {}
+
+/// The browser's drive list: one root here.
+pub fn roots() -> Vec<PathBuf> {
+    vec![PathBuf::from("/")]
+}
+
+/// No trash support here yet; the browser says so rather than deleting.
+pub fn recycle(_paths: &[PathBuf]) -> anyhow::Result<()> {
+    anyhow::bail!("Deleting from the browser is only available on Windows for now.")
+}

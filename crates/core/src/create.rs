@@ -322,7 +322,10 @@ impl Seek for VolumeWriter {
             SeekFrom::End(d) => self.written as i128 + d as i128,
         };
         if pos < 0 {
-            return Err(io::Error::new(io::ErrorKind::InvalidInput, "seek before start"));
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "seek before start",
+            ));
         }
         self.pos = pos as u64;
         Ok(self.pos)
@@ -380,7 +383,10 @@ impl Seek for VolumeReader {
             SeekFrom::End(d) => self.total as i128 + d as i128,
         };
         if pos < 0 {
-            return Err(io::Error::new(io::ErrorKind::InvalidInput, "seek before start"));
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "seek before start",
+            ));
         }
         self.pos = pos as u64;
         Ok(self.pos)
@@ -488,8 +494,13 @@ pub fn create(
         .sum();
 
     if options.test_after {
-        test(&volumes, options.format, options.password.as_deref(), progress)
-            .context("The new archive failed its test, so the source files were kept")?;
+        test(
+            &volumes,
+            options.format,
+            options.password.as_deref(),
+            progress,
+        )
+        .context("The new archive failed its test, so the source files were kept")?;
     }
     if options.delete_sources {
         progress.start(PHASE_DELETE, items.len() as u64);
@@ -586,7 +597,9 @@ fn write_7z(
     progress: &Progress,
 ) -> Result<()> {
     use sevenz_rust2::encoder_options::{AesEncoderOptions, Lzma2Options};
-    use sevenz_rust2::{ArchiveEntry, ArchiveWriter, EncoderConfiguration, EncoderMethod, Password, SourceReader};
+    use sevenz_rust2::{
+        ArchiveEntry, ArchiveWriter, EncoderConfiguration, EncoderMethod, Password, SourceReader,
+    };
 
     let mut writer = ArchiveWriter::new(out).context("starting the 7z archive")?;
     let mut methods: Vec<EncoderConfiguration> = Vec::new();
@@ -649,7 +662,10 @@ fn write_7z(
         let block = &files[i..j];
         let result = if block.len() == 1 {
             writer
-                .push_archive_entry(entry_for(block[0]), Some(Source::new(&block[0].source, progress)))
+                .push_archive_entry(
+                    entry_for(block[0]),
+                    Some(Source::new(&block[0].source, progress)),
+                )
                 .map(|_| ())
         } else {
             let entries = block.iter().map(|f| entry_for(f)).collect();
@@ -674,7 +690,12 @@ fn write_7z(
 
 /// Decompresses every file of a new archive and checks it against its
 /// stored checksum, without writing anything.
-pub fn test(volumes: &[PathBuf], format: Format, password: Option<&str>, progress: &Progress) -> Result<()> {
+pub fn test(
+    volumes: &[PathBuf],
+    format: Format,
+    password: Option<&str>,
+    progress: &Progress,
+) -> Result<()> {
     let password = password.filter(|p| !p.is_empty());
     let reader = VolumeReader::open(volumes)?;
     progress.start(PHASE_TEST, reader.total);
@@ -703,7 +724,8 @@ pub fn test(volumes: &[PathBuf], format: Format, password: Option<&str>, progres
             }
         }
         Format::SevenZ => {
-            let pw = password.map_or_else(sevenz_rust2::Password::empty, sevenz_rust2::Password::new);
+            let pw =
+                password.map_or_else(sevenz_rust2::Password::empty, sevenz_rust2::Password::new);
             let mut archive = sevenz_rust2::ArchiveReader::new(reader, pw)
                 .map_err(|e| anyhow::anyhow!("reading the 7z archive: {e}"))?;
             progress.total.store(
@@ -784,14 +806,22 @@ mod tests {
     fn roundtrip(options: Options) {
         let dir = tempfile::tempdir().unwrap();
         let src = tree(dir.path());
-        let dest = dir.path().join(format!("out.{}", options.format.extension()));
+        let dest = dir
+            .path()
+            .join(format!("out.{}", options.format.extension()));
         let progress = Progress::default();
-        let report = create(&[src.clone()], &dest, &options, &progress).unwrap();
+        let report = create(std::slice::from_ref(&src), &dest, &options, &progress).unwrap();
         assert_eq!(report.files, 4);
         if options.volume_size.is_some() {
             assert!(report.volumes.len() > 1, "{:?}", report.volumes);
         }
-        test(&report.volumes, options.format, options.password.as_deref(), &progress).unwrap();
+        test(
+            &report.volumes,
+            options.format,
+            options.password.as_deref(),
+            &progress,
+        )
+        .unwrap();
         assert_eq!(progress.done.load(Ordering::Relaxed), report.unpacked);
         if options.delete_sources {
             assert!(!src.exists());
@@ -861,7 +891,13 @@ mod tests {
         let dest = dir.path().join("out.zip");
         let progress = Progress::default();
         progress.cancel.store(true, Ordering::Relaxed);
-        let err = create(&[src.clone()], &dest, &Options::default(), &progress).unwrap_err();
+        let err = create(
+            std::slice::from_ref(&src),
+            &dest,
+            &Options::default(),
+            &progress,
+        )
+        .unwrap_err();
         assert!(is_cancelled(&err), "{err:#}");
         assert!(!dest.exists());
         assert!(src.join("readme.txt").exists());

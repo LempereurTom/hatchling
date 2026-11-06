@@ -73,3 +73,13 @@ extern "C-unwind" fn open_urls(
         }
     }
 }
+
+/// The browser's drive list: one root here.
+pub fn roots() -> Vec<PathBuf> {
+    vec![PathBuf::from("/")]
+}
+
+/// No trash support here yet; the browser says so rather than deleting.
+pub fn recycle(_paths: &[PathBuf]) -> anyhow::Result<()> {
+    anyhow::bail!("Deleting from the browser is only available on Windows for now.")
+}

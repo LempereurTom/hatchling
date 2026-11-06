@@ -23,7 +23,7 @@ fn system_locale_selects_hindi_or_falls_back_to_english() {
         }
         return;
     }
-    for (locale, expected) in [("hi_IN.UTF-8", "hi"), ("fr_FR.UTF-8", "fallback")] {
+    for (locale, expected) in [("hi_IN.UTF-8", "hi"), ("de_DE.UTF-8", "fallback")] {
         let output = std::process::Command::new(std::env::current_exe().unwrap())
             .args([
                 "--exact",

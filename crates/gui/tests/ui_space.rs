@@ -104,6 +104,11 @@ fn keeping_does_not_fit_but_removing_does() {
         renderer_name: Some("software".into()),
     })))
     .unwrap();
+    // These tests read the English text; a computer set to French would
+    // otherwise show the French catalog.
+    // Slint registers the bundled catalogs with the first component made.
+    drop(hatchzip_gui::AboutWindow::new().unwrap());
+    slint::select_bundled_translation("en").unwrap();
 
     for ((scheme, tag), archive) in [(ColorScheme::Light, "light"), (ColorScheme::Dark, "dark")]
         .into_iter()

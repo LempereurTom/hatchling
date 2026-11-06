@@ -36,6 +36,13 @@ slint = { version = "~1.18.1", default-features = false, features = [
     "unstable-winit-030",
 ] }
 
+# Local time for the browser's "Modified" column. Already in the tree.
+time = { version = "0.3.44", features = ["local-offset"] }
+
+# The Recycle Bin, for deleting from the browser.
+[target."cfg(windows)".dependencies]
+windows-sys = { version = "0.61.2", features = ["Win32_Foundation", "Win32_UI_Shell"] }
+
 # Receives the files Finder opens with HatchZip; already in the tree through
 # winit, at the same versions.
 [target."cfg(target_os = \"macos\")".dependencies]

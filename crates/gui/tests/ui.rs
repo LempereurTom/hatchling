@@ -991,6 +991,11 @@ fn windows_end_to_end() {
         renderer_name: Some("software".into()),
     })))
     .unwrap();
+    // These tests read the English text; a computer set to French would
+    // otherwise show the French catalog.
+    // Slint registers the bundled catalogs with the first component made.
+    drop(hatchzip_gui::AboutWindow::new().unwrap());
+    slint::select_bundled_translation("en").unwrap();
 
     for (scheme, tag) in [(ColorScheme::Light, "light"), (ColorScheme::Dark, "dark")] {
         main_window_flow(scheme, tag);

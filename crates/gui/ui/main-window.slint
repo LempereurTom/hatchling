@@ -1,4 +1,4 @@
-import { Button, CheckBox, LineEdit, ListView, Palette } from "std-widgets.slint";
+import { Button, CheckBox, ComboBox, LineEdit, ListView, Palette } from "std-widgets.slint";
 import { Theme, Line, VLine, FolderIcon, FileIcon, DropIcon } from "theme.slint";
 import { Phase, PlanView, TaskView, SpacePanel, Progress, Outcome, Busy, TaskButtons, PasswordPrompt, ReplacePrompt } from "parts.slint";
 
@@ -149,6 +149,8 @@ export component MainWindow inherits Window {
     in property <[EntryRow]> entries;
     in property <PlanView> plan;
     in property <string> output;
+    // Folders recently extracted to, newest first.
+    in property <[string]> output-history;
     in-out property <string> keep-free: "2";
     in property <bool> keep-free-valid: true;
     out property <string> storage-unit: @tr("GB");
@@ -259,6 +261,7 @@ export component MainWindow inherits Window {
     callback remove-archive-toggled();
     callback close-when-done-toggled();
     callback change-output();
+    callback pick-output-history(int);
     callback keep-free-edited(string);
     callback extract();
     callback test();
@@ -505,6 +508,13 @@ export component MainWindow inherits Window {
                     text: root.output;
                     read-only: true;
                     horizontal-stretch: 1;
+                }
+                if root.output-history.length > 0: ComboBox {
+                    width: 34px;
+                    model: root.output-history;
+                    current-index: -1;
+                    accessible-label: @tr("Recent destination folders");
+                    selected => { root.pick-output-history(self.current-index); }
                 }
                 Button {
                     text: @tr("Browse…");

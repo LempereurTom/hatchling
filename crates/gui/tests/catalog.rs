@@ -78,27 +78,40 @@ fn source_ids(dir: &Path) -> HashSet<String> {
     result
 }
 
-#[test]
-fn hindi_catalog_matches_marked_messages() {
+fn check_catalog(language: &str, complete: bool) {
     let root = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let po =
-        std::fs::read_to_string(root.join("translations/hi/LC_MESSAGES/hatchzip-gui.po")).unwrap();
+    let po = std::fs::read_to_string(root.join(format!(
+        "translations/{language}/LC_MESSAGES/hatchzip-gui.po"
+    )))
+    .unwrap();
     let sources = source_ids(&root.join("ui"));
     let catalog: HashSet<_> = catalog_ids(&po).into_iter().collect();
     let stale: Vec<_> = catalog.iter().filter(|id| !sources.contains(*id)).collect();
     assert!(
         stale.is_empty(),
-        "Hindi catalog contains removed source messages: {stale:?}"
+        "{language} catalog contains removed source messages: {stale:?}"
     );
-    // GB is deliberately untranslated to exercise English fallback.
-    let missing: Vec<_> = sources
-        .difference(&catalog)
-        .filter(|id| *id != "GB")
-        .collect();
+    if !complete {
+        return;
+    }
+    let missing: Vec<_> = sources.difference(&catalog).collect();
     assert!(
         missing.is_empty(),
-        "Hindi catalog is missing messages: {missing:?}"
+        "{language} catalog is missing messages: {missing:?}"
     );
+}
+
+/// French covers every window, the browser and the add dialog included.
+#[test]
+fn french_catalog_matches_marked_messages() {
+    check_catalog("fr", true);
+}
+
+/// Hindi covers the extraction windows only; the browser and the add dialog
+/// fall back to English. It must still hold nothing that was removed.
+#[test]
+fn hindi_catalog_has_no_stale_messages() {
+    check_catalog("hi", false);
 }
 
 #[test]

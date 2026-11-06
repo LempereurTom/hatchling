@@ -77,7 +77,12 @@ pub fn register(_dirs: &Dirs, gui: &Path) -> Result<Vec<String>> {
     let exe = gui.to_string_lossy();
     let mut written = Vec::new();
     for ext in EXTENSIONS {
-        submenu(&hkcu, &menu_key(ext), &exe, ACTIONS.iter().chain(ADD_ACTIONS))?;
+        submenu(
+            &hkcu,
+            &menu_key(ext),
+            &exe,
+            ACTIONS.iter().chain(ADD_ACTIONS),
+        )?;
         written.push(format!("Explorer: .{ext} files"));
     }
     // Archives already have their own submenu with these entries in it.

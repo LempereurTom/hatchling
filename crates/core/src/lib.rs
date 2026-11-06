@@ -18,6 +18,7 @@ pub mod create;
 pub mod engine;
 mod fsutil;
 pub mod journal;
+pub mod peek;
 mod platform;
 pub mod replace;
 pub mod restore;
