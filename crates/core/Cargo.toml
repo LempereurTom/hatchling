@@ -29,6 +29,9 @@ serde.workspace = true
 serde_json.workspace = true
 sevenz-rust2.workspace = true
 tar.workspace = true
+# Local time for ZIP timestamps, which are stored in local time. Already in
+# the tree through zip.
+time = { version = "0.3.44", features = ["local-offset"] }
 # The UnRAR decoder, bound without the safe wrapper: it needs the data
 # callback, which the safe crates don't expose. The bindings are MIT or
 # Apache; the UnRAR C++ source they build is under its own license, see

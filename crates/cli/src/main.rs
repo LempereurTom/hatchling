@@ -218,6 +218,42 @@ fn run(command: Command) -> Result<u8> {
             }
             Ok(code)
         }
+        Command::Create {
+            archive,
+            sources,
+            level,
+            password_env,
+            encrypt_names,
+            solid_block,
+            volume_size,
+            test,
+            delete_sources,
+        } => create(
+            &archive,
+            &sources,
+            hatchzip_core::create::Options {
+                format: match archive.extension().and_then(|e| e.to_str()) {
+                    Some(e) if e.eq_ignore_ascii_case("7z") => hatchzip_core::create::Format::SevenZ,
+                    Some(e) if e.eq_ignore_ascii_case("zip") => hatchzip_core::create::Format::Zip,
+                    _ => anyhow::bail!("Name the archive .zip or .7z to choose its format."),
+                },
+                level,
+                password: match password_env {
+                    Some(var) => Some(std::env::var(&var).with_context(|| format!("reading the password from ${var}"))?),
+                    None => None,
+                },
+                encrypt_names,
+                solid_block: match solid_block {
+                    Some(0) => None,
+                    Some(s) => Some(s),
+                    None => Some(hatchzip_core::create::DEFAULT_SOLID_BLOCK),
+                },
+                volume_size,
+                test_after: test,
+                delete_sources,
+                ..Default::default()
+            },
+        ),
         Command::Restore { archive, output } => restore(&archive, output.as_deref()),
         Command::Completions { shell } => {
             // Named after however we were called, so `hz completions bash`
@@ -915,4 +951,19 @@ fn progress_bar(total: u64, prefix: &'static str) -> ProgressBar {
     bar.set_prefix(prefix);
     bar.enable_steady_tick(Duration::from_millis(200));
     bar
+}
+
+fn create(archive: &Path, sources: &[PathBuf], options: hatchzip_core::create::Options) -> Result<u8> {
+    let progress = hatchzip_core::create::Progress::default();
+    let report = hatchzip_core::create::create(sources, archive, &options, &progress)?;
+    for v in &report.volumes {
+        say!("{}", v.display());
+    }
+    say!(
+        "{} files, {} packed into {}.",
+        report.files,
+        hatchzip_core::human(report.unpacked),
+        hatchzip_core::human(report.packed)
+    );
+    Ok(0)
 }

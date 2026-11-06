@@ -14,6 +14,7 @@
 
 pub mod archive;
 mod chosen;
+pub mod create;
 pub mod engine;
 mod fsutil;
 pub mod journal;

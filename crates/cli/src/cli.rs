@@ -176,6 +176,36 @@ pub enum Command {
         #[command(flatten)]
         secret: Secret,
     },
+    /// Create a ZIP or 7z archive from files and folders
+    #[command(visible_alias = "a")]
+    Create {
+        /// The archive to write; its extension picks the format (.zip or .7z)
+        archive: PathBuf,
+        /// Files and folders to put in it
+        #[arg(required = true, value_name = "SOURCE")]
+        sources: Vec<PathBuf>,
+        /// Compression level, 0 (store) to 9 (smallest)
+        #[arg(short = 'l', long, default_value_t = 5, value_parser = clap::value_parser!(u32).range(0..=9))]
+        level: u32,
+        /// Encrypt with AES-256, reading the password from this variable
+        #[arg(long, value_name = "VAR")]
+        password_env: Option<String>,
+        /// 7z only: encrypt the file names too
+        #[arg(long, requires = "password_env")]
+        encrypt_names: bool,
+        /// 7z only: the largest solid block, such as 256MB; 0 for none
+        #[arg(long, value_parser = parse_size)]
+        solid_block: Option<u64>,
+        /// Split into volumes of this size, such as 4GB
+        #[arg(short = 'v', long, value_parser = parse_size)]
+        volume_size: Option<u64>,
+        /// Read the archive back before finishing
+        #[arg(long)]
+        test: bool,
+        /// Remove the sources once the archive is written
+        #[arg(long)]
+        delete_sources: bool,
+    },
     /// Restore a partially extracted archive to a standard archive
     #[command(
         long_about = "Restore a partially extracted archive to a standard archive.\n\n\
